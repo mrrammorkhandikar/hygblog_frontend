@@ -1,98 +1,155 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
-import { Menu, X } from 'lucide-react'; // Using lucide-react for better icons
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { Menu, X } from 'lucide-react';
 
-const Header = () => {
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
+export default function Header() {
+  const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-    const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+  // change background on scroll
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
-    return (
-        // Sticky header with primary color background
-        <header className="bg-primary text-white py-4 px-4 shadow-xl sticky top-0 z-50">
-            <nav className="container mx-auto flex justify-between items-center">
-                
-                {/* Logo and Clinic Name */}
-                <Link href="/" className="flex items-center space-x-2 flex-shrink-0">
-                    <Image 
-                        src="/Images/General/TheToothLogo2.png" 
-                        alt="Dr. Bushra&apos;s Dental Clinic Logo" 
-                        width={40} 
-                        height={40} 
-                        className="rounded-full ring-2 ring-goldAccent" 
-                    />
-                    <span className="text-xl font-bold tracking-tight hidden sm:block px-1"> Dr. Bushra&apos;s Dental Care</span>
-                    <span className="text-xl font-bold tracking-tight sm:hidden px-1"> Dr. Bushra&apos;s Dental Care</span>
-                </Link>
+  const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
 
-                {/* Desktop Navigation Links */}
-                <ul className="hidden lg:flex space-x-8 text-lg font-medium">
-                    <li><Link href="/" className="hover:text-goldAccent transition">Home</Link></li>
-                    <li><Link href="/services" className="hover:text-goldAccent transition">Services</Link></li>
-                    <li><Link href="/about" className="hover:text-goldAccent transition">About</Link></li>
-                    <li><Link href="/gallery" className="hover:text-goldAccent transition">Gallery</Link></li>
-                    <li><Link href="/contact" className="hover:text-goldAccent transition">Contact</Link></li>
-                </ul>
+  const closeMobileMenu = () => setMobileMenuOpen(false);
 
-                {/* Call-to-Action and Mobile Button */}
-                <div className="flex items-center space-x-4">
-                    
-                    {/* BOOK APPOINTMENT BUTTON (Desktop) */}
-                    <Link
-                        href="/contact" // Assuming the contact page is used for booking
-                        className="hidden md:inline-flex bg-brownAccent text-white font-semibold px-6 py-2 rounded-lg shadow-md hover:bg-goldAccent transition duration-300 transform hover:scale-[1.03]"
-                    >
-                        Book Appointment
-                    </Link>
+  return (
+    <>
+      {/* Overlay for mobile menu */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={closeMobileMenu}
+        />
+      )}
 
-                    {/* Mobile Menu Button */}
-                    <button 
-                        className="lg:hidden p-2 rounded-md hover:bg-primary/70 transition" 
-                        aria-label="Toggle menu"
-                        onClick={toggleMenu}
-                    >
-                        {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-                    </button>
-                </div>
+      <motion.header
+        initial={{ y: -60, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.7, ease: 'easeOut' }}
+        className={`fixed top-0 z-50 w-full transition-all duration-500 ${
+          scrolled
+            ? 'bg-white/50 backdrop-blur-md shadow-md border-b border-teal-50'
+            : 'bg-transparent backdrop-blur-none'
+        }`}
+        suppressHydrationWarning
+      >
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-3 flex items-center justify-between">
+          {/* Logo + Brand */}
+          <Link
+            href="/"
+            className="flex items-center gap-2 sm:gap-3 group"
+            onClick={closeMobileMenu}
+          >
+            <img
+              src="/Images/TheToothLogo2.png"
+              alt="Dr. Bushra's Dental Care"
+              className="h-8 sm:h-9 w-auto transition-transform duration-300 group-hover:scale-105"
+            />
+            <span
+              className="text-base sm:text-lg font-semibold tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-teal-700 to-cyan-600"
+              style={{ fontFamily: '"Playfair Display", serif' }}
+            >
+              Hygiene Shelf
+            </span>
+          </Link>
 
-            </nav>
+          {/* Mobile menu button */}
+          <button
+            onClick={toggleMobileMenu}
+            className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            aria-label="Toggle mobile menu"
+          >
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
 
-            {/* Mobile Menu Overlay */}
-            <AnimatePresence>
-                {isMenuOpen && (
-                    <motion.div
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        transition={{ duration: 0.2 }}
-                        className="lg:hidden absolute top-full left-0 w-full bg-primary shadow-lg"
-                    >
-                        <ul className="flex flex-col items-center space-y-6 py-8">
-                            <li><Link href="/" className="text-xl hover:text-goldAccent transition" onClick={toggleMenu}>Home</Link></li>
-                            <li><Link href="/services" className="text-xl hover:text-goldAccent transition" onClick={toggleMenu}>Services</Link></li>
-                            <li><Link href="/about" className="text-xl hover:text-goldAccent transition" onClick={toggleMenu}>About</Link></li>
-                            <li><Link href="/gallery" className="text-xl hover:text-goldAccent transition" onClick={toggleMenu}>Gallery</Link></li>
-                            <li><Link href="/contact" className="text-xl hover:text-goldAccent transition" onClick={toggleMenu}>Contact</Link></li>
-                            <li>
-                                <Link
-                                    href="/contact"
-                                    className="mt-4 inline-flex bg-brownAccent text-white font-semibold px-8 py-3 rounded-lg shadow-md hover:bg-goldAccent transition duration-300"
-                                    onClick={toggleMenu}
-                                >
-                                    Book Appointment
-                                </Link>
-                            </li>
-                        </ul>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-            
-        </header>
-    );
-};
+          {/* Desktop Nav links */}
+          <nav
+            className="hidden md:flex items-center gap-8 text-[15px] font-medium text-slate-700"
+            style={{ fontFamily: '"Inter", sans-serif' }}
+          >
+            <Link
+              href="/"
+              className="relative hover:text-teal-700 transition-colors duration-300 after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-[2px] after:bg-teal-600 hover:after:w-full after:transition-all"
+            >
+              Home
+            </Link>
+            <Link
+              href="/blogs"
+              className="relative hover:text-teal-700 transition-colors duration-300 after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-[2px] after:bg-teal-600 hover:after:w-full after:transition-all"
+            >
+              Blogs
+            </Link>
+            <Link
+              href="/about"
+              className="relative hover:text-teal-700 transition-colors duration-300 after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-[2px] after:bg-teal-600 hover:after:w-full after:transition-all"
+            >
+              About
+            </Link>
+            <Link
+              href="/contact"
+              className="relative hover:text-teal-700 transition-colors duration-300 after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-[2px] after:bg-teal-600 hover:after:w-full after:transition-all"
+            >
+              Contact
+            </Link>
+          </nav>
+        </div>
 
-export default Header;
+        {/* Mobile menu */}
+        <motion.div
+          initial={{ height: 0, opacity: 0 }}
+          animate={{
+            height: mobileMenuOpen ? 'auto' : 0,
+            opacity: mobileMenuOpen ? 1 : 0
+          }}
+          transition={{ duration: 0.3, ease: 'easeInOut' }}
+          className={`md:hidden overflow-hidden ${
+            scrolled ? 'bg-white/95' : 'bg-white/90'
+          } border-t border-teal-50`}
+        >
+          <nav className="px-4 py-4 space-y-3 flex flex-col">
+            <Link
+              href="/"
+              className="text-slate-700 hover:text-teal-700 font-medium py-2 px-3 rounded-lg hover:bg-teal-50 transition-colors"
+              style={{ fontFamily: '"Inter", sans-serif' }}
+              onClick={closeMobileMenu}
+            >
+              Home
+            </Link>
+            <Link
+              href="/blogs"
+              className="text-slate-700 hover:text-teal-700 font-medium py-2 px-3 rounded-lg hover:bg-teal-50 transition-colors"
+              style={{ fontFamily: '"Inter", sans-serif' }}
+              onClick={closeMobileMenu}
+            >
+              Blogs
+            </Link>
+            <Link
+              href="/about"
+              className="text-slate-700 hover:text-teal-700 font-medium py-2 px-3 rounded-lg hover:bg-teal-50 transition-colors"
+              style={{ fontFamily: '"Inter", sans-serif' }}
+              onClick={closeMobileMenu}
+            >
+              About
+            </Link>
+            <Link
+              href="/contact"
+              className="text-slate-700 hover:text-teal-700 font-medium py-2 px-3 rounded-lg hover:bg-teal-50 transition-colors"
+              style={{ fontFamily: '"Inter", sans-serif' }}
+              onClick={closeMobileMenu}
+            >
+              Contact
+            </Link>
+          </nav>
+        </motion.div>
+      </motion.header>
+    </>
+  );
+}

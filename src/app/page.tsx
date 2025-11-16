@@ -1,20 +1,14 @@
-// src/app/page.tsx
 
-import Hero from '../components/Hero';
-import AboutPreview from '../components/AboutPreview';
-import ServicesGrid from '../components/ServicesGrid';
-import Testimonials from '../components/Testimonials';
-import ContactForm from '../components/ContactForm';
-// Removed: Header and Footer
+import { posts } from '@/data/posts'
+import HomePage from './home/page'
 
-export default function Home() {
+export default function Content() {
+  const recent = posts.slice(0, 3)
+  const tokan = process.env.NEXT_PUBLIC_API_TOKEN || ''
+
   return (
     <>
-      <Hero />
-      <AboutPreview />
-      <ServicesGrid />
-      <Testimonials />
-      <ContactForm />
+      <HomePage token={tokan} />
     </>
-  );
+  )
 }

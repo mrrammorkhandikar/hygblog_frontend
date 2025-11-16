@@ -1,109 +1,43 @@
-// src/components/Footer.tsx
-
-import Link from 'next/link';
-import Image from 'next/image';
-import { MapPin, Phone, Mail, Facebook, Instagram } from 'lucide-react';
-
-const Footer = () => {
-    // Reusable styles for links
-    const linkClasses = "hover:text-goldAccent transition flex items-center";
-
-    return (
-        <footer className="bg-primary text-white pt-16 pb-8 border-t-8 border-brownAccent/80">
-            <div className="container mx-auto px-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
-                    
-                    {/* Column 1: Logo, About & CTA */}
-                    <div className="space-y-6">
-                        <Link href="/" className="flex items-center justify-center space-x-3">
-                            <Image
-                                src="/Images/General/TheLogo.jpeg"
-                                alt="Dr. Bushra&apos;s Dental Clinic Logo"
-                                width={300} // Increased from 75 to 85
-                                height={125} // Increased from 75 to 85
-                                className="rounded-2xl ring-2 ring-goldAccent"
-                            />
-                            
-                        </Link>
-                    <p className="text-neutralLight text-sm">
-                            Providing Pune with painless, modern, and affordable dental care for the whole family. Your smile is our priority.
-                        </p>
-                        <Link
-                            href="/contact"
-                            className="flex justify-center items-center bg-goldAccent text-primary font-bold px-6 py-2 rounded-lg shadow-md hover:bg-brownAccent hover:text-white transition duration-300"
-                        >
-                            Get Directions
-                        </Link> 
-                    </div>
-
-                    {/* Column 2: Quick Links */}
-                    <div>
-                        <h3 className="text-xl font-semibold mb-6 border-b-2 border-tealSoft/50 pb-2">Quick Links</h3>
-                        <ul className="space-y-3">
-                            <li><Link href="/" className={linkClasses}>Home</Link></li>
-                            <li><Link href="/services" className={linkClasses}>Services</Link></li>
-                            <li><Link href="/about" className={linkClasses}>About Us</Link></li>
-                            <li><Link href="/contact" className={linkClasses}>Book Online</Link></li>
-                        </ul>
-                    </div>
-
-                    {/* Column 3: Contact Info (With Icons) */}
-                    <div>
-                        <h3 className="text-xl font-semibold mb-6 border-b-2 border-tealSoft/50 pb-2">Clinic Hours & Contact</h3>
-                        <ul className="space-y-4 text-neutralLight">
-                            <li className="flex items-start space-x-3">
-                                <MapPin className="w-5 h-5 mt-0.5 text-tealSoft flex-shrink-0" />
-                                <p>2nd floor, Teddy&apos;s Apartment, Global Health Hub Dental and Polyclinic, Chowk, opp. Gera Junction, Lullanagar, Pune, Maharashtra 411040</p>
-                            </li>
-                            <li className="flex items-center space-x-3">
-                                <Mail className="w-5 h-5 text-tealSoft" />
-                                <p><a href="mailto:contact@ghhclinic.com" className="hover:text-goldAccent transition">contact@ghhclinic.com</a></p>
-                            </li>
-                            <li className="flex items-center space-x-3">
-                                <Phone className="w-5 h-5 text-tealSoft" />
-                                <p><a href="tel:+911234567890" className="hover:text-goldAccent transition">+91 9529045550</a></p>
-                            </li>
-                            
-                            <li className="pt-2">
-                                <p className="font-semibold text-white">Mon - Sat: 10:00 AM - 7:00 PM</p>
-                                <p className="text-sm">Sunday: Closed</p>
-                            </li>
-                        </ul>
-                    </div>
-
-                    {/* Column 4: Social Media (With Icons) */}
-                    <div>
-                        <h3 className="text-xl font-semibold mb-6 border-b-2 border-tealSoft/50 pb-2">Connect with Us</h3>
-                        <div className="flex space-x-5">
-                            <a href="https://www.facebook.com/drsayyedb" className="hover:text-goldAccent transition" aria-label="Follow us on Facebook">
-                                <Facebook className="w-7 h-7" />
-                            </a>
-                            <a href="https://www.instagram.com/dr.bushra.s" className="hover:text-goldAccent transition" aria-label="Follow us on Instagram">
-                                <Instagram className="w-7 h-7" />
-                            </a>
-                            
-                        </div>
-                    </div>
-
-                </div>
-                
-                <div className="border-t border-tealSoft/50 pt-8 text-center text-neutralLight text-sm">
-                    <p>&copy; {new Date().getFullYear()} Dr. Bushra&apos;s Dental Care. All rights reserved.</p>
-                </div>
-            </div>
-            
-            {/* Floating WhatsApp Button */}
-            <a
-                href="https://wa.me/919529045550"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="fixed bottom-5 right-5 bg-green-500 text-white p-4 rounded-full shadow-lg hover:bg-green-600 transition-transform transform hover:scale-110 z-50"
-                aria-label="Chat on WhatsApp"
+export default function Footer() {
+  return (
+    <footer className="relative w-full bg-gradient-to-b from-white to-[#f8fcff] border-t border-teal-50">
+      <div className="mx-auto max-w-7xl px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-slate-600">
+        {/* Logo + Title */}
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-teal-600 to-cyan-500 flex items-center justify-center text-white font-bold text-lg shadow-md">
+            H
+          </div>
+          <div className="flex flex-col">
+            <span
+              className="text-base font-semibold text-teal-800"
+              style={{ fontFamily: '"Playfair Display", serif' }}
             >
-                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-            </a>
-        </footer>
-    );
-};
+              Hygiene Shelf
+            </span>
+            <span className="text-xs text-slate-500">
+              Compassion | Expertise | Care
+            </span>
+          </div>
+        </div>
 
-export default Footer;
+        {/* Links */}
+        <nav
+          className="flex flex-wrap items-center justify-center gap-6 text-slate-600 font-medium"
+          style={{ fontFamily: '"Inter", sans-serif' }}
+        >
+          <a href="/blogs" className="hover:text-teal-700 transition-colors">Blogs</a>
+          <a href="/about" className="hover:text-teal-700 transition-colors">About</a>
+          <a href="/contact" className="hover:text-teal-700 transition-colors">Contact</a>
+        </nav>
+
+        {/* Copyright */}
+        <p className="text-slate-500 text-center md:text-right text-sm">
+          © {new Date().getFullYear()} Hygiene Shelf · All rights reserved
+        </p>
+      </div>
+
+      {/* Subtle glow line */}
+      <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-cyan-400 via-teal-500 to-cyan-400 opacity-60" />
+    </footer>
+  );
+}

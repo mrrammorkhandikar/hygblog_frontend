@@ -1,0 +1,648 @@
+'use client';
+
+import React, { useEffect, useState, useActionState } from 'react';
+import { motion } from 'framer-motion';
+import { Mail, Phone, User } from 'lucide-react';
+import { apiGet } from '@/app/admin/api';
+import { sendContact, type ContactState } from '@/app/contact/actions';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card'; // Card components imported but not used, keeping for completeness
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useUser } from '@/contexts/UserContext';
+
+/**
+ * Premium Home Page for HygineShelf.in
+ * - Uses Framer Motion for animations
+ * - Tailwind for styling (ensure tailwind is configured)
+ * - Loads tags with tag_type=regular from /tags endpoint using apiGet
+ * - Groups tags by slug and displays each group in a separate row
+ *
+ * Props:
+ * - token: string (for authenticated API calls)
+ */
+type Props = {
+  token: string;
+};
+
+type Tag = {
+  id: string;
+  name: string;
+  slug?: string;
+  tag_type: string;
+  description?: string;
+  image_url?: string;
+  created_at: string;
+  updated_at: string;
+};
+
+type Blog = {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt?: string;
+  content?: string;
+  category?: string;
+  tags?: string[];
+  image_url?: string;
+  date: string;
+  published: boolean;
+  featured: boolean;
+  author?: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export default function HomePage({ token = '' }: Partial<Props>) {
+  const { user } = useUser();
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isClient, setIsClient] = useState(false); // isMobile state removed as it was not fully necessary for the fix
+
+  // Contact form state
+  const [state, formAction] = useActionState<ContactState, FormData>(sendContact, {
+    ok: false,
+    message: ''
+  });
+
+  // loadTags (regular tags only)
+  const loadTags = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await apiGet<Tag[]>('/tags?tag_type=regular', token);
+      setTags(Array.isArray(data) ? data : []);
+    } catch (err: any) {
+      console.error('Failed to load tags:', err);
+      setError('Failed to load tags. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // loadBlogs (latest featured and published blogs)
+  const loadBlogs = async () => {
+    try {
+      const response = await apiGet<{ data: Blog[] }>('/posts?published=true&featured=true&limit=2&sortBy=date&sortOrder=desc', token);
+      setBlogs(Array.isArray(response.data) ? response.data : []);
+    } catch (err: any) {
+      console.error('Failed to load blogs:', err);
+      // Don't set error for blogs, just log it
+    }
+  };
+
+  // Group tags by slug
+  const groupedTags = tags.reduce((acc, tag) => {
+    const slug = tag.slug || 'other';
+    if (!acc[slug]) {
+      acc[slug] = [];
+    }
+    acc[slug].push(tag);
+    return acc;
+  }, {} as Record<string, Tag[]>);
+
+  useEffect(() => {
+    setIsClient(true);
+    // The mobile check logic and its resize listener were removed as they aren't strictly necessary for the image/general speed fix.
+
+    loadTags();
+    loadBlogs();
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+
+
+  // Framer motion variants
+  const fadeInUp = {
+    hidden: { opacity: 0, y: 30 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.9 } },
+  };
+
+  const stagger = {
+    hidden: {},
+    visible: { transition: { staggerChildren: 0.12 } },
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-[#f7fdff] via-[#eefdfa] to-[#f3fbff] text-slate-800 antialiased scroll-smooth">
+      {/* ---------- Hero ---------- */}
+      <header className="relative overflow-hidden">
+        <div
+          className="absolute inset-0 pointer-events-none"
+          aria-hidden
+          style={{
+            background:
+              'radial-gradient(closest-side, rgba(14,165,233,0.06), transparent 40%), radial-gradient(closest-side, rgba(15,118,110,0.04), transparent 30%)',
+          }}
+        />
+        <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-20 py-20 md:py-28 flex flex-col-reverse md:flex-row items-center gap-12">
+          {/* Left Content */}
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 1 }}
+            className="w-full md:w-1/2 z-10"
+          >
+            <h1
+              className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight tracking-tight"
+              style={{ fontFamily: `"Playfair Display", serif` }}
+            >
+              <span
+                className="bg-clip-text text-transparent bg-gradient-to-r from-[#06b6d4] via-[#0ea5a3] to-[#0f766e] animate-shimmer"
+                // gradient shimmer via class below
+              >
+                Empowering Healthy Living
+              </span>
+            </h1>
+
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.45, duration: 1 }}
+              className="mt-6 text-lg text-slate-700 max-w-xl leading-relaxed"
+              style={{ fontFamily: `"Inter", sans-serif` }}
+            >
+              HygineShelf is a compassionate space for hygiene awareness, practical
+              wellness tips, and evidence-based health guidance from{' '}
+              <strong className="text-[#0f766e]">Dr. Bushra Mirza</strong>. Learn how
+              small, everyday habits can build resilient, healthy lives — in body and mind.
+            </motion.p>
+
+            <motion.div
+              className="mt-8 flex flex-wrap gap-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.85, duration: 0.7 }}
+            >
+              <Button
+                onClick={() => (window.location.href = '/blogs')}
+                className="bg-[#0f766e] hover:bg-[#0d5e59] text-white rounded-full px-6 py-3 shadow-lg"
+              >
+                Explore Blogs
+              </Button>
+
+              <a
+                href="#contact"
+                className="inline-flex items-center justify-center rounded-full px-6 py-3 border border-[#c6f6e6] text-[#0f766e] bg-white/60 hover:bg-white transition shadow-sm"
+              >
+                Contact Dr. Bushra
+              </a>
+            </motion.div>
+
+            {/* subtle trust badges / small text */}
+            <motion.div
+              className="mt-6 flex flex-wrap items-center gap-6 text-sm text-slate-600"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.0, duration: 0.7 }}
+            >
+              <div className="flex items-center gap-3">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#0ea5a3]" />
+                <span>Evidence-based tips</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#60a5fa]" />
+                <span>Practical routines</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#93c5fd]" />
+                <span>Trusted guidance</span>
+              </div>
+            </motion.div>
+          </motion.div>
+
+          {/* Right Hero Image (floating + parallax-like) - OPTIMIZED */}
+          <motion.div
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 1.1 }}
+            className="w-full md:w-1/2 flex justify-center md:justify-end"
+          >
+            <motion.img
+              src="/Images/GodOfHygine.png"
+             // srcSet="/Images/GodOfHygine-320w.png 320w, /Images/GodOfHygine-640w.png 640w, /Images/GodOfHygine.png 1000w"
+              sizes="(max-width: 640px) 320px, (max-width: 1024px) 420px, 520px"
+              width={520} // Set a fixed width/height for aspect ratio to prevent CLS
+              height={520}
+              alt="God of Hygiene"
+              className="w-[320px] md:w-[420px] lg:w-[520px] drop-shadow-2xl select-none"
+              animate={{ y: [0, -18, 0] }}
+              transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+              style={{ willChange: 'transform' }}
+              loading="lazy" 
+            />
+          </motion.div>
+        </div>
+
+        {/* Decorative gradient divider */}
+        <div className="h-20 -mt-6 pointer-events-none">
+          <svg viewBox="0 0 1440 120" className="w-full block" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="g1" x1="0" x2="1">
+                <stop offset="0%" stopColor="#ecfeff" />
+                <stop offset="100%" stopColor="#ffffff" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M0,40 C240,100 480,0 720,40 C960,80 1200,20 1440,60 L1440 120 L0 120 Z"
+              fill="url(#g1)"
+              opacity="0.95"
+            />
+          </svg>
+        </div>
+      </header>
+
+      {/* ---------- About ---------- */}
+      <section className="relative bg-white -mt-8 pt-16 pb-20">
+        <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-20">
+          <motion.div
+            variants={stagger}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+            className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center"
+          >
+            {/* Photo */}
+            <motion.div variants={fadeInUp} className="flex justify-center md:justify-start">
+              <motion.img
+                src="/Images/DrBushraMirza.png"
+                alt="Dr. Bushra Mirza"
+                className="w-72 md:w-96 rounded-3xl shadow-2xl border-4 border-[#ecfeff]"
+                animate={{ y: [0, -6, 0] }}
+                transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+                loading="lazy"
+                width={384} // Added width/height for CLS
+                height={384}
+              />
+            </motion.div>
+
+            {/* Expanded About text */}
+            <motion.div variants={fadeInUp} className="prose prose-slate max-w-none">
+              <h2 style={{ fontFamily: '"Playfair Display", serif' }} className="text-3xl md:text-4xl text-[#0f766e] font-bold">
+                Meet Dr. Bushra Mirza — physician, educator, and hygiene advocate
+              </h2>
+
+              <p className="text-lg text-slate-700 mt-3">
+                Dr. Bushra Mirza combines clinical experience with a passion for public health
+                education. Her work focuses on practical hygiene, infection prevention, and
+                everyday wellness strategies that families can adopt with ease.
+              </p>
+
+              <p className="text-slate-700 mt-4">
+                On HygineShelf she translates evidence-based medicine into friendly,
+                actionable advice — covering topics like hand hygiene, household sanitation,
+                child health, nutrition basics, and mental wellbeing. Her goal is to help
+                readers build healthy habits that feel simple, sustainable, and empowering.
+              </p>
+
+              <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="bg-[#f0fdfa] border border-[#e6fffa] p-4 rounded-lg shadow-sm">
+                  <h4 className="text-[#0f766e] font-semibold">Experience</h4>
+                  <p className="text-sm text-slate-600 mt-1">Clinical practice & public health outreach</p>
+                </div>
+                <div className="bg-[#eff6ff] border border-[#e6f2ff] p-4 rounded-lg shadow-sm">
+                  <h4 className="text-[#0f766e] font-semibold">Approach</h4>
+                  <p className="text-sm text-slate-600 mt-1">Practical, human-centered, evidence-backed</p>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <Button onClick={() => (window.location.href = '/about')} className="bg-gradient-to-r from-[#0f766e] to-[#06b6d4] text-white rounded-full px-6 py-2 shadow-lg">
+                  Read Dr. Bushra's Story
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+<section className="py-20 bg-gradient-to-b from-[#f7fffd] to-white">
+  <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-20">
+    <div className="text-center mb-8">
+      <h3 className="text-2xl md:text-3xl font-bold text-[#0f766e]" style={{ fontFamily: '"Playfair Display", serif' }}>
+        Topics
+      </h3>
+      <p className="text-sm text-slate-600 mt-2">Explore our health and hygiene topics</p>
+    </div>
+
+    {loading && <p className="text-center text-slate-500">Loading topics…</p>}
+    {error && <p className="text-center text-red-500">{error}</p>}
+
+    <motion.div
+      variants={stagger}
+      initial="hidden"
+      whileInView="visible"
+      // FIX 1: Reduced amount to 0.05 to ensure animation triggers quickly on mobile scroll.
+      viewport={{ once: true, amount: 0.05 }} 
+    >
+      {Object.keys(groupedTags).length === 0 && !loading ? (
+        // placeholder topics if none
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+          {[1, 2, 3, 4].map((i) => (
+            <motion.div key={i} variants={fadeInUp} className="rounded-2xl overflow-hidden bg-white shadow-sm border border-slate-100">
+              <img
+                src="https://images.unsplash.com/photo-1580281657521-6c8b56d59b6f?auto=format&fit=crop&w=1280&q=80"
+                alt="Placeholder topic"
+                className="w-full h-32 sm:h-36 md:h-44 object-cover"
+                // FIX 2: Use eager loading for placeholders to ensure immediate visibility.
+                loading="eager" 
+                width={1280}
+                height={1280}
+              />
+              <div className="p-4">
+                <h4 className="text-lg font-semibold text-[#115e59]">Topic {i}</h4>
+                <p className="text-sm text-slate-600 mt-2">Short description of topic to spark interest.</p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      ) : (
+        Object.entries(groupedTags).map(([slug, slugTags]) => (
+          <div key={slug} className="mb-12">
+            <h4 className="text-xl md:text-2xl font-semibold text-[#0f766e] mb-6 capitalize" style={{ fontFamily: '"Playfair Display", serif', textAlign: 'center' }}>
+              {slug.replace(/_/g, ' ')}
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+              {/* Added index to map for conditional eager loading */}
+              {slugTags.map((tag, index) => ( 
+                <motion.article
+                  key={tag.id}
+                  variants={fadeInUp}
+                  whileHover={{ translateY: -6, boxShadow: '0 18px 40px rgba(8, 89, 76, 0.08)' }}
+                  className="rounded-2xl overflow-hidden bg-white shadow-sm border border-slate-100 cursor-pointer transition"
+                  onClick={() => (window.location.href = `/blogs`)}
+                >
+                  <img
+                    src={tag.image_url ?? 'https://images.unsplash.com/photo-1526256262350-7da7584cf5eb?auto=format&fit=crop&w=1280&q=80'}
+                    alt={tag.name}
+                    className="w-full h-32 sm:h-36 md:h-44 object-cover"
+                    // FIX 2: Set first 4 images to eager loading.
+                    loading={index < 4 ? 'eager' : 'lazy'} 
+                    width={1280}
+                    height={1280 * (44 / 1280)}
+                  />
+                  <div className="p-4">
+                    <h5 className="text-lg font-semibold text-[#115e59]">{tag.name}</h5>
+                    <p className="text-sm text-slate-600 mt-2 line-clamp-2">{tag.description ?? 'Explore articles, tips, and guides.'}</p>
+                  </div>
+                </motion.article>
+              ))}
+            </div>
+          </div>
+        ))
+      )}
+    </motion.div>
+  </div>
+</section>
+
+
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-20">
+          <div className="flex items-center justify-between mb-8">
+            <h3 className="text-2xl md:text-3xl font-bold text-[#0f766e]" style={{ fontFamily: '"Playfair Display", serif' }}>
+              Latest from the Blog
+            </h3>
+            <p className="text-sm text-slate-600">Featured reads to start with</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {blogs.length > 0 ? (
+              blogs.map((blog, i) => (
+                <motion.article
+                  key={blog.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.8, delay: i * 0.12 }}
+                  whileHover={{ scale: 1.02 }}
+                  className="rounded-3xl overflow-hidden bg-gradient-to-br from-[#f8fafc] to-white border border-slate-100 shadow-lg cursor-pointer"
+                  onClick={() => (window.location.href = `/blogs/${blog.slug}`)}
+                >
+                  <img
+                    src={blog.image_url ?? 'https://source.unsplash.com/collection/medical/1200x800?nature,health'}
+                    alt={blog.title}
+                    className="w-full h-64 object-cover"
+                    loading="lazy"
+                    width={1200} // Added width/height for CLS
+                    height={800}
+                  />
+                  <div className="p-6 md:p-8">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm text-white bg-[#0f766e] px-3 py-1 rounded-full">
+                        {blog.category || 'Hygiene'}
+                      </span>
+                      <span className="text-sm text-slate-500">
+                        {new Date(blog.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                      </span>
+                    </div>
+                    <h4 className="text-2xl font-semibold text-[#0f766e] mb-3" style={{ fontFamily: '"Playfair Display", serif' }}>
+                      {blog.title}
+                    </h4>
+                    <p className="text-slate-600 mb-5">
+                      {blog.excerpt || 'Explore this insightful article on health and wellness.'}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm text-slate-600">Read time: 4 min</div>
+                      <div>
+                        <Button className="bg-[#0f766e] text-white rounded-full px-4 py-2">Read</Button>
+                      </div>
+                    </div>
+                  </div>
+                </motion.article>
+              ))
+            ) : (
+              // Fallback placeholder cards if no blogs are loaded
+              [1, 2].map((i) => (
+                <motion.article
+                  key={i}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.8, delay: i * 0.12 }}
+                  whileHover={{ scale: 1.02 }}
+                  className="rounded-3xl overflow-hidden bg-gradient-to-br from-[#f8fafc] to-white border border-slate-100 shadow-lg cursor-pointer"
+                  onClick={() => (window.location.href = `/blogs`)}
+                >
+                  <img
+                    src={`https://source.unsplash.com/collection/medical-${i}/1200x800?nature,health`}
+                    alt="Placeholder blog"
+                    className="w-full h-64 object-cover"
+                    loading="lazy"
+                    width={1200} // Added width/height for CLS
+                    height={800}
+                  />
+                  <div className="p-6 md:p-8">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm text-white bg-[#0f766e] px-3 py-1 rounded-full">Hygiene</span>
+                      <span className="text-sm text-slate-500">Coming Soon</span>
+                    </div>
+                    <h4 className="text-2xl font-semibold text-[#0f766e] mb-3" style={{ fontFamily: '"Playfair Display", serif' }}>Latest Health Insights</h4>
+                    <p className="text-slate-600 mb-5">Stay tuned for our upcoming articles on health and wellness.</p>
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm text-slate-600">Read time: 4 min</div>
+                      <div>
+                        <Button className="bg-[#0f766e] text-white rounded-full px-4 py-2">Explore</Button>
+                      </div>
+                    </div>
+                  </div>
+                </motion.article>
+              ))
+            )}
+          </div>
+
+          <div className="flex justify-center mt-12">
+            <motion.button
+              animate={{ y: [0, -8, 0] }}
+              transition={{ repeat: Infinity, duration: 1.6, ease: 'easeInOut' }}
+              onClick={() => (window.location.href = '/blogs')}
+              className="bg-gradient-to-r from-[#0f766e] to-[#06b6d4] text-white px-8 py-3 rounded-full shadow-lg"
+            >
+              More Blogs →
+            </motion.button>
+          </div>
+        </div>
+      </section>
+
+      {/* ---------- Contact ---------- */}
+      <section id="contact" className="py-20 bg-gradient-to-b from-[#f0fdfa] to-[#f8fcff]">
+        <div className="max-w-6xl mx-auto px-6 md:px-12 lg:px-20">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
+            <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} className="space-y-6">
+              <h3 className="text-3xl font-bold text-[#0f766e]" style={{ fontFamily: '"Playfair Display", serif' }}>Get in touch</h3>
+              <p className="text-slate-700">Questions, collaborations, or speaking requests — we’d love to hear from you.</p>
+
+              <div className="space-y-4 text-slate-700">
+                <div className="flex items-center gap-3">
+                  <Mail className="text-[#0f766e]" />
+                  <a href="mailto:drbushra@hygineshelf.in" className="text-slate-700">drbushra@hygineshelf.in</a>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Phone className="text-[#0f766e]" />
+                  <span>+91 98765 43210</span>
+                </div>
+
+              </div>
+            </motion.div>
+
+            <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }} className="bg-white px-6 py-8 rounded-2xl shadow-lg">
+              {user?.isRegistered && (
+                <div className="mb-6 p-4 bg-[#f0fdfa] rounded-lg border border-[#c6f6e6]">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-[#0f766e] rounded-full flex items-center justify-center">
+                      <User className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-[#0f766e]">Welcome back, {user.username}!</p>
+                      <p className="text-xs text-slate-600">Your contact details have been pre-filled</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <form action={formAction} className="space-y-4">
+                {user?.isRegistered && (
+                  <input
+                    type="hidden"
+                    name="unique_user_id"
+                    value={user.uniqueUserId}
+                  />
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="home-name" className="text-sm font-medium text-slate-700">Full Name *</Label>
+                    <Input
+                      id="home-name"
+                      name="name"
+                      defaultValue={user?.isRegistered ? user.username : ''}
+                      placeholder="Your name"
+                      className="px-3 py-3"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="home-email" className="text-sm font-medium text-slate-700">Email Address *</Label>
+                    <Input
+                      id="home-email"
+                      name="email"
+                      type="email"
+                      defaultValue={user?.isRegistered ? user.email : ''}
+                      placeholder="your.email@example.com"
+                      className="px-3 py-3"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="home-message" className="text-sm font-medium text-slate-700">Message *</Label>
+                  <textarea
+                    id="home-message"
+                    name="message"
+                    rows={5}
+                    placeholder="How can we help?"
+                    className="w-full rounded-lg border border-slate-200 p-3 resize-none focus:outline-none focus:ring-2 focus:ring-[#0f766e] focus:border-transparent transition"
+                    required
+                  />
+                </div>
+
+                <div className="flex justify-end">
+                  <Button type="submit" className="bg-[#0f766e] hover:bg-[#0d5e59] text-white rounded-full px-6 py-2">Send Message</Button>
+                </div>
+
+                {state.message && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={`p-4 rounded-lg ${
+                      state.ok
+                        ? 'bg-green-50 border border-green-200 text-green-800'
+                        : 'bg-red-50 border border-red-200 text-red-800'
+                    }`}
+                  >
+                    {state.message}
+                  </motion.div>
+                )}
+              </form>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* ---------- Extra Styles (fonts, animations) ---------- */}
+      <style jsx global>{`
+        /* Fonts: Inter + Playfair Display from Google */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Playfair+Display:wght@400;600;700;900&display=swap');
+
+        body { font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+
+        /* Shimmer gradient animation used for hero title */
+        @keyframes shimmer {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        .animate-shimmer {
+          background-size: 200% auto;
+          animation: shimmer 4s linear infinite;
+        }
+
+        /* Slightly stronger image smoothing */
+        img { image-rendering: auto; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+        /* Line clamp utility (if not using plugin) */
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+        /* Reduce mobile touch highlight */
+        a, button { -webkit-tap-highlight-color: rgba(0,0,0,0); }
+
+        /* Make sure textarea inherits fonts */
+        textarea { font-family: inherit; }
+
+        /* Smooth scroll for anchor links */
+        html { scroll-behavior: smooth; }
+      `}</style>
+    </div>
+  );
+}

@@ -1,12 +1,10 @@
-// src/app/layout.tsx
-
 import type { Metadata } from "next";
-// Reverting to the custom fonts defined previously, as your CSS relies on them
-import { Playfair_Display, Inter } from "next/font/google"; 
+import { Playfair_Display, Inter } from "next/font/google";
 import "./globals.css";
-import Header from '../components/Header'; // You need to import this here
-import Footer from '../components/Footer'; // You need to import this here
-
+import LayoutContent from "./LayoutContent";
+import { ThemeProvider } from "@/components/ui/theme-provider";
+import { UserProvider } from "@/contexts/UserContext";
+import UserRegistration from "@/components/UserRegistration";
 
 // Re-defining the fonts and variables used by your Tailwind config
 const headingFont = Playfair_Display({
@@ -34,25 +32,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        // 💥 FIX: All base classes are applied here to bypass the PostCSS error.
-        className={`
-          bg-neutralGray 
-          ${headingFont.variable} ${bodyFont.variable} 
-          font-body antialiased
-        `}
-      >
-        {/* 💥 FIX: Re-adding Header to the layout */}
-        <Header />
-        
-        {/* 💥 FIX: Adding the max-width content wrapper */}
-        <div className="">
-            {children}
-        </div>
-
-        {/* 💥 FIX: Re-adding Footer to the layout */}
-        <Footer />
+    <html lang="en" className={`${headingFont.variable} ${bodyFont.variable}`} suppressHydrationWarning>
+      <body className="bg-gray-50 font-body antialiased">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <UserProvider>
+            <LayoutContent>{children}</LayoutContent>
+            <UserRegistration />
+          </UserProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
