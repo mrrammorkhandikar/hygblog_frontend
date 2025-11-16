@@ -4,10 +4,10 @@ const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:5000'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { postId: string } }
+  { params }: { params: Promise<{ postId: string }> }
 ) {
   try {
-    const { postId } = params
+    const { postId } = await params
     
     const response = await fetch(`${BACKEND_URL}/api/affiliate-links/posts/${postId}/associations`, {
       method: 'GET',

@@ -4,10 +4,10 @@ const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:5000'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { linkId: string } }
+  { params }: { params: Promise<{ linkId: string }> }
 ) {
   try {
-    const { linkId } = params
+    const { linkId } = await params
     const { searchParams } = new URL(request.url)
     const format = searchParams.get('format') || 'csv'
     
@@ -56,4 +56,3 @@ export async function GET(
     )
   }
 }
-

@@ -30,7 +30,7 @@ const eslintConfig = [
       "@next/next/no-html-link-for-pages": "off",
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/exhaustive-deps": "warn",
-      "@typescript-eslint/prefer-const": "error",
+      "prefer-const": "error",
     },
   },
 ];
