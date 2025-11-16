@@ -1,9 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // ✅ Disable Turbopack (forces Webpack for builds)
-  experimental: {
-    turbo: false,
-  },
 
   transpilePackages: [
     "react-slick",
