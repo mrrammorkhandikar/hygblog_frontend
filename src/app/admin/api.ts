@@ -1,5 +1,5 @@
 // frontend/src/app/admin/api.ts
-export const API_BASE = 'http://localhost:8080';
+export const API_BASE = process.env.NEXT_PUBLIC_ADMIN_API || 'http://localhost:8080';
 
 // JWT decode utility
 export function decodeJWT(token: string) {

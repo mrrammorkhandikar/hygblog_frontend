@@ -1,8 +1,6 @@
 'use server'
 
-const API_BASE = process.env.NODE_ENV === 'production'
-  ? 'http://localhost:8080'
-  : 'http://localhost:8080';
+const API_BASE = process.env.NEXT_PUBLIC_ADMIN_API || 'http://localhost:8080';
 
 export type ContactState = {
   ok: boolean

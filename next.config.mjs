@@ -1,7 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',  //output: 'export',
-
   // ✅ Disable Turbopack (forces Webpack for builds)
   experimental: {
     turbo: false,
