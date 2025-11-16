@@ -158,7 +158,7 @@ export default function CreatePost() {
   // Generate unique slug from title
   const generateSlug = (title: string): string => {
     // Convert to lowercase and replace spaces with hyphens
-    let slug = title.toLowerCase().trim()
+    const slug = title.toLowerCase().trim()
       .replace(/[^\w\s-]/g, '') // Remove special characters
       .replace(/\s+/g, '-') // Replace spaces with hyphens
       .replace(/-+/g, '-'); // Replace multiple hyphens with single hyphen
