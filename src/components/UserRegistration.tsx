@@ -128,7 +128,7 @@ export default function UserRegistration() {
                   value={formData.username}
                   onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                   placeholder="Your display name"
-                  className="pl-10"
+                  className="pl-10 text-black"
                   required
                 />
               </div>
@@ -148,7 +148,7 @@ export default function UserRegistration() {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="your.email@example.com"
-                  className="pl-10"
+                  className="pl-10 text-black"
                   required
                 />
               </div>

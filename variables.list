@@ -1,0 +1,14 @@
+# Frontend Environment Variables for Vercel Deployment
+# Copy these to your Vercel dashboard
+
+# Backend API URL (replace with your backend Vercel URL)
+NEXT_PUBLIC_ADMIN_API=https://your-backend-project.vercel.app
+BACKEND_URL=https://your-backend-project.vercel.app
+
+# Sanity CMS (if using)
+NEXT_PUBLIC_SANITY_PROJECT_ID=91oyefs1
+NEXT_PUBLIC_SANITY_DATASET=production
+NEXT_PUBLIC_API_TOKEN=skTestApiToken1234567890
+
+# Optional: Next.js settings
+NEXT_TELEMETRY_DISABLED=1

@@ -692,7 +692,7 @@ export default function CreatePost() {
                       <select
                         value={block.metadata?.size || 'medium'}
                         onChange={(e) => updateContentBlock(block.id, { metadata: { ...block.metadata, size: e.target.value as any } })}
-                        className="px-2 py-1 border border-gray-300 rounded text-sm"
+                        className="px-2 py-1 border text-black border-gray-300 rounded text-sm"
                       >
                         <option value="small">Small</option>
                         <option value="medium">Medium</option>
@@ -701,7 +701,7 @@ export default function CreatePost() {
                       </select>
                     </div>
                     {block.metadata?.size === 'custom' && (
-                      <div className="flex space-x-3">
+                      <div className="flex space-x-3 text-black">
                         <input type="number" placeholder="Width" value={block.metadata?.width || ''} onChange={(e) => updateContentBlock(block.id, { metadata: { ...block.metadata, width: Number(e.target.value) } })} className="px-2 py-1 border border-gray-300 rounded text-sm w-20" />
                         <input type="number" placeholder="Height" value={block.metadata?.height || ''} onChange={(e) => updateContentBlock(block.id, { metadata: { ...block.metadata, height: Number(e.target.value) } })} className="px-2 py-1 border border-gray-300 rounded text-sm w-20" />
                       </div>

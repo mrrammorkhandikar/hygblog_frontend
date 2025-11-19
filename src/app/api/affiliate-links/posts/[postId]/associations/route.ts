@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:5000'
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8080'
 
 export async function GET(
   request: NextRequest,
@@ -9,7 +9,7 @@ export async function GET(
   try {
     const { postId } = await params
     
-    const response = await fetch(`${BACKEND_URL}/api/affiliate-links/posts/${postId}/associations`, {
+    const response = await fetch(`${BACKEND_URL}/affiliate-links/posts/${postId}/associations`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

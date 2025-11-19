@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:5000'
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8080'
 
 export async function GET(
   request: NextRequest,
@@ -11,7 +11,7 @@ export async function GET(
     const { searchParams } = new URL(request.url)
     const format = searchParams.get('format') || 'csv'
     
-    const response = await fetch(`${BACKEND_URL}/api/affiliate-tracking/export/${linkId}?format=${format}`, {
+    const response = await fetch(`${BACKEND_URL}/affiliate-tracking/export/${linkId}?format=${format}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
