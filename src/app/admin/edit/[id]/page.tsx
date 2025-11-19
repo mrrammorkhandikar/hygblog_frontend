@@ -37,6 +37,136 @@ type ContentBlock = {
   affiliateLink?: { type: 'affiliate' | 'custom' | null; id?: string; name?: string; url?: string };
 };
 
+// Format selected text in textarea
+function formatSelectedText(textarea: HTMLTextAreaElement, startTag: string, endTag: string) {
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  const selectedText = textarea.value.substring(start, end);
+
+  if (selectedText) {
+    const newText = startTag + selectedText + endTag;
+    const beforeText = textarea.value.substring(0, start);
+    const afterText = textarea.value.substring(end);
+
+    textarea.value = beforeText + newText + afterText;
+    textarea.selectionStart = start + startTag.length;
+    textarea.selectionEnd = end + startTag.length;
+
+    // Trigger change event
+    const event = new Event('input', { bubbles: true });
+    textarea.dispatchEvent(event);
+  }
+}
+
+// Parse text formatting for preview
+function parseFormattedText(text: string): string {
+  if (!text) return '';
+
+  // Convert markdown-style formatting to HTML
+  let formatted = text;
+
+  // Bold: **text** -> <strong>text</strong>
+  formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+  // Italic: *text* -> <em>text</em>
+  formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+  // Underline: <u>text</u> -> <u>text</u> (already HTML)
+  // Note: This is already HTML so it will be rendered
+
+  return formatted;
+}
+
+// Auto-generate SEO from content
+function generateSEO(title: string, excerpt: string, category: string, tagNames: string[], contentBlocks: ContentBlock[]) {
+  // Helper to extract text from content blocks
+  const extractContentText = (blocks: ContentBlock[]): string => {
+    return blocks.map(block => {
+      if (block.type === 'text') {
+        return block.content;
+      }
+      return '';
+    }).join(' ').trim();
+  };
+
+  const contentText = extractContentText(contentBlocks);
+  const fullContext = [title, excerpt, category, ...tagNames, contentText].join(' ').toLowerCase();
+
+  // Generate SEO Title (limited to 60 chars)
+  const seoTitle = title && title.trim() ? title.trim().substring(0, 60) : 'New Blog Post';
+
+  // Generate SEO Description (based on excerpt or first content paragraph, limited to 160 chars)
+  let seoDesc = '';
+  if (excerpt.trim()) {
+    seoDesc = excerpt.trim().substring(0, 160);
+  } else if (contentText) {
+    const firstPara = contentBlocks.find(b => b.type === 'text' && b.content.trim())?.content.trim();
+    if (firstPara) {
+      seoDesc = firstPara.substring(0, 160);
+    }
+  } else {
+    seoDesc = `Learn about ${category} - ${seoTitle}`;
+  }
+
+  // Generate Keywords (extract from title, tags, category, and content)
+  const keywords: string[] = [];
+
+  // Add title words (important keywords)
+  if (title) {
+    const titleWords = title.toLowerCase().split(/\s+/).filter(w => w.length > 2 && !['the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'had', 'her', 'was', 'one', 'our', 'out', 'day', 'get', 'has', 'him', 'his', 'how', 'its', 'may', 'new', 'now', 'old', 'see', 'two', 'who', 'boy', 'did', 'her', 'she', 'too', 'car'].includes(w));
+    keywords.push(...titleWords.slice(0, 3));
+  }
+
+  // Add category
+  if (category) {
+    keywords.push(category.toLowerCase());
+  }
+
+  // Add tags
+  keywords.push(...tagNames.map(t => t.toLowerCase()));
+
+  // Extract additional keywords from content (basic frequency)
+  if (contentText) {
+    const words = contentText.toLowerCase().match(/\b\w{4,}\b/g) || [];
+    const wordFreq: { [key: string]: number } = {};
+    words.forEach(word => {
+      if (!['that', 'with', 'have', 'this', 'will', 'your', 'from', 'they', 'know', 'want', 'been', 'good', 'much', 'some', 'time', 'very', 'when', 'come', 'here', 'just', 'like', 'long', 'make', 'many', 'over', 'such', 'take', 'than', 'then', 'them', 'well', 'were', 'what', 'when', 'where', 'which', 'while', 'would', 'about', 'after', 'again', 'best', 'could', 'every', 'first', 'great', 'other', 'right', 'small', 'still', 'there', 'these', 'think', 'three', 'under', 'water', 'where', 'which', 'while', 'would'].includes(word)) {
+        wordFreq[word] = (wordFreq[word] || 0) + 1;
+      }
+    });
+
+    const topWords = Object.entries(wordFreq)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 5)
+      .map(([word]) => word);
+
+    keywords.push(...topWords);
+  }
+
+  // Remove duplicates and limit to 7 keywords
+  const uniqueKeywords = Array.from(new Set(keywords)).slice(0, 7);
+  const seoKeywords = uniqueKeywords.join(', ');
+
+  // Ensure at least 5 keywords if possible
+  if (uniqueKeywords.length < 5 && fullContext.includes('health') && !keywords.includes('health')) {
+    uniqueKeywords.push('health');
+  }
+  if (uniqueKeywords.length < 5 && fullContext.includes('care') && !keywords.includes('care')) {
+    uniqueKeywords.push('care');
+  }
+  if (uniqueKeywords.length < 5 && fullContext.includes('hygiene') && !keywords.includes('hygiene')) {
+    uniqueKeywords.push('hygiene');
+  }
+  if (uniqueKeywords.length < 6 && fullContext.includes('tips') && !keywords.includes('tips')) {
+    uniqueKeywords.push('tips');
+  }
+  if (uniqueKeywords.length < 7 && fullContext.includes('guide') && !keywords.includes('guide')) {
+    uniqueKeywords.push('guide');
+  }
+
+  return { seoTitle, seoDesc, seoKeywords: uniqueKeywords.join(', ') };
+}
+
 export default function EditPost() {
   const { id } = useParams();
   const router = useRouter();
@@ -234,23 +364,26 @@ export default function EditPost() {
     return () => clearTimeout(timer);
   }, [title, excerpt, excerptSuggestions]);
 
+  // Auto-generate SEO when content changes
   useEffect(() => {
-    const timer = setTimeout(() => {
-      // Generate SEO suggestions ONLY when there's substantial content written
-      const hasContent = contentBlocks.some(block => block.type === 'text' && block.content.trim().length > 20);
-      const hasMultipleBlocks = contentBlocks.length >= 2;
-      const shouldGenerateSEO = title.trim() && !seoTitle.trim() && !seoTitleSuggestions.length &&
-                                (hasContent || hasMultipleBlocks);
+    const categoryName = selectedCategoryId ? categories.find(c => c.id === selectedCategoryId)?.name ?? '' : '';
+    const tagNames = selectedTagIds.map(tagId => {
+      const tag = tags.find(t => t.id === tagId);
+      return tag ? tag.name : '';
+    }).filter(name => name.length > 0);
 
-      if (shouldGenerateSEO) {
-        getLLMSuggestions('seo_title');
-        getLLMSuggestions('seo_description');
-        getLLMSuggestions('seo_keywords');
-      }
-    }, 2000);
+    const { seoTitle: newSeoTitle, seoDesc: newSeoDesc, seoKeywords: newSeoKeywords } = generateSEO(
+      title,
+      excerpt,
+      categoryName,
+      tagNames,
+      contentBlocks
+    );
 
-    return () => clearTimeout(timer);
-  }, [title, seoTitle, seoTitleSuggestions, seoDescriptionSuggestions, seoKeywordSuggestions, contentBlocks]);
+    setSeoTitle(newSeoTitle);
+    setSeoDescription(newSeoDesc);
+    setSeoKeywords(newSeoKeywords);
+  }, [title, excerpt, selectedCategoryId, selectedTagIds, contentBlocks, categories, tags]);
 
   const addContentBlock = (type: 'text' | 'image' | 'ul' | 'ol') => {
     const newBlock: ContentBlock = {
@@ -588,7 +721,7 @@ const getContextFromForm = (): LLMSuggestionContext & { content?: string } => {
                 >
                   <option value={currentUser.username}>{currentUser.username}</option>
                   {authors.map(auth => (
-                    <option key={auth.id} value={ auth.username}>
+                    <option key={auth.id} value={auth.username}>
                       {auth.username}
                     </option>
                   ))}
@@ -680,237 +813,266 @@ const getContextFromForm = (): LLMSuggestionContext & { content?: string } => {
 
         {/* Content Blocks */}
         <div className="bg-white p-6 rounded-lg shadow-sm border space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">Content</h2>
-            <div className="flex space-x-2">
-              <button type="button" onClick={() => addContentBlock('text')} className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">Add Text</button>
-              <button type="button" onClick={() => addContentBlock('image')} className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700">Add Image</button>
-              <button type="button" onClick={() => addContentBlock('ul')} className="px-3 py-1 bg-purple-600 text-white rounded text-sm hover:bg-purple-700">Add Bullet List</button>
-              <button type="button" onClick={() => addContentBlock('ol')} className="px-3 py-1 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700">Add Numbered List</button>
+          <h2 className="text-lg font-semibold text-gray-900">Content</h2>
+
+          <div className="space-y-4 relative">
+            <div className="absolute bottom-4 right-4 flex space-x-2 bg-white p-2 rounded-lg shadow-md border">
+              <button type="button" onClick={() => addContentBlock('text')} className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700" title="Add Text Block">📄</button>
+              <button type="button" onClick={() => addContentBlock('image')} className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700" title="Add Image Block">🖼️</button>
+              <button type="button" onClick={() => addContentBlock('ul')} className="px-3 py-1 bg-purple-600 text-white rounded text-sm hover:bg-purple-700" title="Add Bullet List">•</button>
+              <button type="button" onClick={() => addContentBlock('ol')} className="px-3 py-1 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700" title="Add Numbered List">1.</button>
             </div>
-          </div>
 
-          <div className="space-y-4">
-            {contentBlocks.map((block, index) => (
-              <div key={block.id} className="border border-gray-200 rounded-lg p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">
-                    {block.type === 'text' ? 'Text' : block.type === 'image' ? 'Image' : block.type === 'ul' ? 'Bullet List' : 'Numbered List'} #{index + 1}
-                  </span>
-                  <div className="flex items-center space-x-2">
-                    <button type="button" onClick={() => moveContentBlock(block.id, 'up')} disabled={index === 0} className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50">Up</button>
-                    <button type="button" onClick={() => moveContentBlock(block.id, 'down')} disabled={index === contentBlocks.length - 1} className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50">Down</button>
-                    <button type="button" onClick={() => removeContentBlock(block.id)} className="p-1 text-red-400 hover:text-red-600">×</button>
-                  </div>
-                </div>
-
-                {/* Text Block */}
-                {block.type === 'text' ? (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <label className="text-sm text-gray-600">Type:</label>
-                      <select
-                        value={block.metadata?.level || 0}
-                        onChange={(e) => updateContentBlock(block.id, { metadata: { ...block.metadata, level: Number(e.target.value) } })}
-                        className="px-2 py-1 border border-gray-300 rounded text-sm text-black"
-                      >
-                        <option value={1}>H1</option>
-                        <option value={2}>H2</option>
-                        <option value={3}>H3</option>
-                        <option value={0}>Paragraph</option>
-                      </select>
-                      </div>
-                    </div>
-                    <textarea
-                      value={block.content}
-                      onChange={(e) => updateContentBlock(block.id, { content: e.target.value })}
-                      rows={4}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 text-black placeholder-gray-500"
-                      placeholder={contentPlaceholder || "Enter text..."}
-                    />
-                    {contentSuggestions.length > 0 && (
-                      <div className="mt-2 space-y-1">
-                        <p className="text-xs text-gray-500 font-medium">AI Content Suggestions:</p>
-                        {contentSuggestions.map((suggestion, idx) => (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => updateContentBlock(block.id, { content: suggestion })}
-                            className="block w-full text-left p-2 text-sm bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded text-purple-700"
-                          >
-                            {suggestion}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ) : block.type === 'image' ? (
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-3">
-                      <label className="text-sm text-gray-600">Size:</label>
-                      <select
-                        value={block.metadata?.size || 'medium'}
-                        onChange={(e) => updateContentBlock(block.id, { metadata: { ...block.metadata, size: e.target.value as any } })}
-                        className="px-2 py-1 border border-gray-300 rounded text-sm text-black placeholder-gray-500"
-                      >
-                        <option value="small">Small</option>
-                        <option value="medium">Medium</option>
-                        <option value="large">Large</option>
-                        <option value="custom">Custom</option>
-                      </select>
-                    </div>
-                    {block.metadata?.size === 'custom' && (
-                      <div className="flex space-x-3">
-                        <input type="number" placeholder="Width" value={block.metadata?.width || ''} onChange={(e) => updateContentBlock(block.id, { metadata: { ...block.metadata, width: Number(e.target.value) } })} className="px-2 py-1 border border-gray-300 rounded text-sm w-20 text-black placeholder-gray-500" />
-                        <input type="number" placeholder="Height" value={block.metadata?.height || ''} onChange={(e) => updateContentBlock(block.id, { metadata: { ...block.metadata, height: Number(e.target.value) } })} className="px-2 py-1 border border-gray-300 rounded text-sm w-20 text-black placeholder-gray-500" />
-                      </div>
-                    )}
-                    <input
-                      type="text"
-                      value={block.metadata?.alt || ''}
-                      onChange={(e) => updateContentBlock(block.id, { metadata: { ...block.metadata, alt: e.target.value } })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 text-black placeholder-gray-500"
-                      placeholder="Alt text..."
-                    />
-                    <ImageUploadManager
-                      onImageUpload={(file, url) => updateContentBlock(block.id, { content: url })}
-                      maxFileSize={10 * 1024 * 1024}
-                      multiple={false}
-                      existingImages={block.content ? [block.content] : []}
-                      uploadEndpoint="/image-upload"
-                      showPreview={true}
-                    />
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="text-sm font-medium text-gray-700">
-                        {block.type === 'ul' ? 'Bullet List' : 'Numbered List'}
-                      </label>
-                      <button type="button" onClick={() => addListItem(block.id)} className="px-2 py-1 bg-teal-600 text-white rounded text-xs hover:bg-teal-700">
-                        Add Item
-                      </button>
-                    </div>
-
-                    <div className="space-y-2 pl-2 border-l-2 border-gray-200">
-                      {(block.listItems || []).map((item, itemIdx) => (
-                        <div key={item.id} className="space-y-2 border border-gray-200 rounded p-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-medium text-gray-500">Item #{itemIdx + 1}</span>
-                            <div className="flex space-x-1">
-                              {item.type === 'text' && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const nestedType = block.type === 'ul' ? 'ul' : 'ol';
-                                    updateListItem(block.id, item.id, {
-                                      nestedList: item.nestedList || { type: nestedType, items: [] }
-                                    });
-                                    if (!item.nestedList?.items.length) addListItem(block.id, item.id);
-                                  }}
-                                  className="px-1 py-0.5 bg-purple-600 text-white rounded text-xs hover:bg-purple-700"
-                                >
-                                  {item.nestedList ? 'Edit Nested' : 'Add Nested'}
-                                </button>
-                              )}
-                              <button type="button" onClick={() => removeListItem(block.id, item.id)} className="px-1 py-0.5 bg-red-600 text-white rounded text-xs hover:bg-red-700">
-                                Remove
-                              </button>
-                            </div>
-                          </div>
-
-                          <select
-                            value={item.type}
-                            onChange={(e) => updateListItem(block.id, item.id, { type: e.target.value as 'text' | 'image' })}
-                            className="px-2 py-1 border border-gray-300 rounded text-sm w-full"
-                          >
-                            <option value="text">Text</option>
-                            <option value="image">Image</option>
-                          </select>
-
-                          {item.type === 'text' ? (
-                            <textarea
-                              value={item.content}
-                              onChange={(e) => updateListItem(block.id, item.id, { content: e.target.value })}
-                              rows={2}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
-                              placeholder="List item text..."
-                            />
-                          ) : (
-                            <div className="space-y-2">
-                              <ImageUploadManager
-                                onImageUpload={(file, url) => updateListItem(block.id, item.id, { content: url })}
-                                maxFileSize={5 * 1024 * 1024}
-                                multiple={false}
-                                existingImages={item.content ? [item.content] : []}
-                                uploadEndpoint="/image-upload"
-                                showPreview={true}
-                              />
-                              <input
-                                type="text"
-                                value={item.imageMetadata?.alt || ''}
-                                onChange={(e) => updateListItem(block.id, item.id, { imageMetadata: { ...(item.imageMetadata || {}), alt: e.target.value } })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
-                                placeholder="Alt text..."
-                              />
-                            </div>
-                          )}
-
-                          {/* Nested List */}
-                          {item.nestedList && item.nestedList.items.length > 0 && (
-                            <div className="pl-4 mt-2 border-l-2 border-gray-200">
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="text-xs font-medium F-500">Nested List</span>
-                                <button type="button" onClick={() => addListItem(block.id, item.id)} className="px-1 py-0.5 bg-teal-600 text-white rounded text-xs hover:bg-teal-700">
-                                  Add
-                                </button>
-                              </div>
-                              {item.nestedList.items.map((nested, nIdx) => (
-                                <div key={nested.id} className="border border-gray-200 rounded p-2 mt-1">
-                                  <div className="flex justify-between text-xs">
-                                    <span>Nested #{nIdx + 1}</span>
-                                    <button type="button" onClick={() => removeListItem(block.id, nested.id, item.id)} className="text-red-600">×</button>
-                                  </div>
-                                  <textarea
-                                    value={nested.content}
-                                    onChange={(e) => updateListItem(block.id, nested.id, { content: e.target.value }, item.id)}
-                                    rows={1}
-                                    className="w-full text-sm mt-1 px-2 py-1 border rounded"
-                                  />
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Affiliate Link */}
-                <div className="border-t pt-3 mt-3">
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">Affiliate Link (Optional)</h4>
-                  <div className="flex space-x-4 mb-2">
-                    <label className="flex items-center">
-                      <input type="radio" name={`aff-${block.id}`} value="custom" checked={block.affiliateLink?.type === 'custom'} onChange={() => updateContentBlock(block.id, { affiliateLink: { type: 'custom', name: '', url: '' } })} className="text-teal-600" />
-                      <span className="ml-1 text-sm">Custom</span>
-                    </label>
-                    <label className="flex items-center">
-                      <input type="radio" name={`aff-${block.id}`} value="none" checked={!block.affiliateLink?.type} onChange={() => updateContentBlock(block.id, { affiliateLink: { type: null } })} className="text-teal-600" />
-                      <span className="ml-1 text-sm">None</span>
-                    </label>
-                  </div>
-
-                  {block.affiliateLink?.type === 'custom' && (
-                    <div className="space-y-2">
-                      <input type="text" placeholder="Button text" value={block.affiliateLink?.name || ''} onChange={(e) => updateContentBlock(block.id, { affiliateLink: { ...block.affiliateLink, name: e.target.value, type: block.affiliateLink?.type ?? null } })} className="w-full text-sm border rounded p-1 text-black placeholder-gray-500" />
-                      <input type="url" placeholder="https://..." value={block.affiliateLink?.url || ''} onChange={(e) => updateContentBlock(block.id, { affiliateLink: { ...block.affiliateLink, url: e.target.value, type: block.affiliateLink?.type ?? null } })} className="w-full text-sm border rounded p-1 text-black placeholder-gray-500" />
-                    </div>
-                  )}
+            {contentBlocks.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="text-4xl mb-4">📝</div>
+                <p className="text-gray-500 mb-4">No content blocks yet. Click the buttons below to add some content.</p>
+                <div className="flex justify-center space-x-2">
+                  <button type="button" onClick={() => addContentBlock('text')} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Add Text Block</button>
+                  <button type="button" onClick={() => addContentBlock('image')} className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Add Image Block</button>
+                  <button type="button" onClick={() => addContentBlock('ul')} className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">Add Bullet List</button>
+                  <button type="button" onClick={() => addContentBlock('ol')} className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Add Numbered List</button>
                 </div>
               </div>
-            ))}
+            ) : (
+              <>
+                {contentBlocks.map((block, index) => (
+                  <div key={block.id} className="border border-gray-200 rounded-lg p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-700">
+                        {block.type === 'text' ? 'Text' : block.type === 'image' ? 'Image' : block.type === 'ul' ? 'Bullet List' : 'Numbered List'} #{index + 1}
+                      </span>
+                      <div className="flex items-center space-x-2">
+                        <button type="button" onClick={() => moveContentBlock(block.id, 'up')} disabled={index === 0} className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50">Up</button>
+                        <button type="button" onClick={() => moveContentBlock(block.id, 'down')} disabled={index === contentBlocks.length - 1} className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50">Down</button>
+                        <button type="button" onClick={() => removeContentBlock(block.id)} className="p-1 text-red-400 hover:text-red-600">×</button>
+                      </div>
+                    </div>
+
+                    {/* Text Block */}
+                    {block.type === 'text' ? (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <label className="text-sm text-gray-600">Type:</label>
+                            <select
+                              value={block.metadata?.level || 0}
+                              onChange={(e) => updateContentBlock(block.id, { metadata: { ...block.metadata, level: Number(e.target.value) } })}
+                              className="px-2 py-1 border border-gray-300 rounded text-sm text-black"
+                            >
+                              <option value={1}>H1</option>
+                              <option value={2}>H2</option>
+                              <option value={3}>H3</option>
+                              <option value={0}>Paragraph</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-1 mb-2 bg-gray-50 p-2 rounded">
+                          <button type="button" onClick={() => {
+                            const textarea = document.getElementById(`edit-text-block-${block.id}`) as HTMLTextAreaElement;
+                            if (textarea) formatSelectedText(textarea, '**', '**');
+                          }} className="px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold" title="Bold">B</button>
+                          <button type="button" onClick={() => {
+                            const textarea = document.getElementById(`edit-text-block-${block.id}`) as HTMLTextAreaElement;
+                            if (textarea) formatSelectedText(textarea, '*', '*');
+                          }} className="px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded text-xs italic" title="Italic">I</button>
+                          <button type="button" onClick={() => {
+                            const textarea = document.getElementById(`edit-text-block-${block.id}`) as HTMLTextAreaElement;
+                            if (textarea) formatSelectedText(textarea, '<u>', '</u>');
+                          }} className="px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded text-xs underline" title="Underline">U</button>
+                        </div>
+                        <textarea
+                          id={`edit-text-block-${block.id}`}
+                          value={block.content}
+                          onChange={(e) => updateContentBlock(block.id, { content: e.target.value })}
+                          rows={4}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 text-black placeholder-gray-500"
+                          placeholder={contentPlaceholder || "Enter text..."}
+                        />
+                        {contentSuggestions.length > 0 && (
+                          <div className="mt-2 space-y-1">
+                            <p className="text-xs text-gray-500 font-medium">AI Content Suggestions:</p>
+                            {contentSuggestions.map((suggestion, idx) => (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={() => updateContentBlock(block.id, { content: suggestion })}
+                                className="block w-full text-left p-2 text-sm bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded text-purple-700"
+                              >
+                                {suggestion}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : block.type === 'image' ? (
+                      <div className="space-y-3">
+                        <div className="flex items-center space-x-3">
+                          <label className="text-sm text-gray-600">Size:</label>
+                          <select
+                            value={block.metadata?.size || 'medium'}
+                            onChange={(e) => updateContentBlock(block.id, { metadata: { ...block.metadata, size: e.target.value as any } })}
+                            className="px-2 py-1 border border-gray-300 rounded text-sm text-black placeholder-gray-500"
+                          >
+                            <option value="small">Small</option>
+                            <option value="medium">Medium</option>
+                            <option value="large">Large</option>
+                            <option value="custom">Custom</option>
+                          </select>
+                        </div>
+                        {block.metadata?.size === 'custom' && (
+                          <div className="flex space-x-3">
+                            <input type="number" placeholder="Width" value={block.metadata?.width || ''} onChange={(e) => updateContentBlock(block.id, { metadata: { ...block.metadata, width: Number(e.target.value) } })} className="px-2 py-1 border border-gray-300 rounded text-sm w-20 text-black placeholder-gray-500" />
+                            <input type="number" placeholder="Height" value={block.metadata?.height || ''} onChange={(e) => updateContentBlock(block.id, { metadata: { ...block.metadata, height: Number(e.target.value) } })} className="px-2 py-1 border border-gray-300 rounded text-sm w-20 text-black placeholder-gray-500" />
+                          </div>
+                        )}
+                        <input
+                          type="text"
+                          value={block.metadata?.alt || ''}
+                          onChange={(e) => updateContentBlock(block.id, { metadata: { ...block.metadata, alt: e.target.value } })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 text-black placeholder-gray-500"
+                          placeholder="Alt text..."
+                        />
+                        <ImageUploadManager
+                          onImageUpload={(file, url) => updateContentBlock(block.id, { content: url })}
+                          maxFileSize={10 * 1024 * 1024}
+                          multiple={false}
+                          existingImages={block.content ? [block.content] : []}
+                          uploadEndpoint="/image-upload"
+                          showPreview={true}
+                        />
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-sm font-medium text-gray-700">
+                            {block.type === 'ul' ? 'Bullet List' : 'Numbered List'}
+                          </label>
+                          <button type="button" onClick={() => addListItem(block.id)} className="px-2 py-1 bg-teal-600 text-white rounded text-xs hover:bg-teal-700">
+                            Add Item
+                          </button>
+                        </div>
+
+                        <div className="space-y-2 pl-2 border-l-2 border-gray-200">
+                          {(block.listItems || []).map((item, itemIdx) => (
+                            <div key={item.id} className="space-y-2 border border-gray-200 rounded p-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-gray-500">Item #{itemIdx + 1}</span>
+                                <div className="flex space-x-1">
+                                  {item.type === 'text' && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const nestedType = block.type === 'ul' ? 'ul' : 'ol';
+                                        updateListItem(block.id, item.id, {
+                                          nestedList: item.nestedList || { type: nestedType, items: [] }
+                                        });
+                                        if (!item.nestedList?.items.length) addListItem(block.id, item.id);
+                                      }}
+                                      className="px-1 py-0.5 bg-purple-600 text-white rounded text-xs hover:bg-purple-700"
+                                    >
+                                      {item.nestedList ? 'Edit Nested' : 'Add Nested'}
+                                    </button>
+                                  )}
+                                  <button type="button" onClick={() => removeListItem(block.id, item.id)} className="px-1 py-0.5 bg-red-600 text-white rounded text-xs hover:bg-red-700">
+                                    Remove
+                                  </button>
+                                </div>
+                              </div>
+
+                              <select
+                                value={item.type}
+                                onChange={(e) => updateListItem(block.id, item.id, { type: e.target.value as 'text' | 'image' })}
+                                className="px-2 py-1 border border-gray-300 rounded text-sm w-full"
+                              >
+                                <option value="text">Text</option>
+                                <option value="image">Image</option>
+                              </select>
+
+                              {item.type === 'text' ? (
+                                <textarea
+                                  value={item.content}
+                                  onChange={(e) => updateListItem(block.id, item.id, { content: e.target.value })}
+                                  rows={2}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                  placeholder="List item text..."
+                                />
+                              ) : (
+                                <div className="space-y-2">
+                                  <ImageUploadManager
+                                    onImageUpload={(file, url) => updateListItem(block.id, item.id, { content: url })}
+                                    maxFileSize={5 * 1024 * 1024}
+                                    multiple={false}
+                                    existingImages={item.content ? [item.content] : []}
+                                    uploadEndpoint="/image-upload"
+                                    showPreview={true}
+                                  />
+                                  <input
+                                    type="text"
+                                    value={item.imageMetadata?.alt || ''}
+                                    onChange={(e) => updateListItem(block.id, item.id, { imageMetadata: { ...(item.imageMetadata || {}), alt: e.target.value } })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                    placeholder="Alt text..."
+                                  />
+                                </div>
+                              )}
+
+                              {/* Nested List */}
+                              {item.nestedList && item.nestedList.items.length > 0 && (
+                                <div className="pl-4 mt-2 border-l-2 border-gray-200">
+                                  <div className="flex items-center justify-between mb-1">
+                                    <span className="text-xs font-medium F-500">Nested List</span>
+                                    <button type="button" onClick={() => addListItem(block.id, item.id)} className="px-1 py-0.5 bg-teal-600 text-white rounded text-xs hover:bg-teal-700">
+                                      Add
+                                    </button>
+                                  </div>
+                                  {item.nestedList.items.map((nested, nIdx) => (
+                                    <div key={nested.id} className="border border-gray-200 rounded p-2 mt-1">
+                                      <div className="flex justify-between text-xs">
+                                        <span>Nested #{nIdx + 1}</span>
+                                        <button type="button" onClick={() => removeListItem(block.id, nested.id, item.id)} className="text-red-600">×</button>
+                                      </div>
+                                      <textarea
+                                        value={nested.content}
+                                        onChange={(e) => updateListItem(block.id, nested.id, { content: e.target.value }, item.id)}
+                                        rows={1}
+                                        className="w-full text-sm mt-1 px-2 py-1 border rounded"
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Affiliate Link */}
+                    <div className="border-t pt-3 mt-3">
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">Affiliate Link (Optional)</h4>
+                      <div className="flex space-x-4 mb-2">
+                        <label className="flex items-center">
+                          <input type="radio" name={`aff-${block.id}`} value="custom" checked={block.affiliateLink?.type === 'custom'} onChange={() => updateContentBlock(block.id, { affiliateLink: { type: 'custom', name: '', url: '' } })} className="text-teal-600" />
+                          <span className="ml-1 text-sm">Custom</span>
+                        </label>
+                        <label className="flex items-center">
+                          <input type="radio" name={`aff-${block.id}`} value="none" checked={!block.affiliateLink?.type} onChange={() => updateContentBlock(block.id, { affiliateLink: { type: null } })} className="text-teal-600" />
+                          <span className="ml-1 text-sm">None</span>
+                        </label>
+                      </div>
+
+                      {block.affiliateLink?.type === 'custom' && (
+                        <div className="space-y-2">
+                          <input type="text" placeholder="Button text" value={block.affiliateLink?.name || ''} onChange={(e) => updateContentBlock(block.id, { affiliateLink: { ...block.affiliateLink, name: e.target.value, type: block.affiliateLink?.type ?? null } })} className="w-full text-sm border rounded p-1 text-black placeholder-gray-500" />
+                          <input type="url" placeholder="https://..." value={block.affiliateLink?.url || ''} onChange={(e) => updateContentBlock(block.id, { affiliateLink: { ...block.affiliateLink, url: e.target.value, type: block.affiliateLink?.type ?? null } })} className="w-full text-sm border rounded p-1 text-black placeholder-gray-500" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
           </div>
         </div>
 
@@ -1041,33 +1203,26 @@ const getContextFromForm = (): LLMSuggestionContext & { content?: string } => {
                           if (metadata?.underline) contentClass += " underline";
 
                           if (level === 0) {
-                            return renderContentElement(
-                              <p key={block.id} className={`mb-6 leading-relaxed text-gray-800 text-base${contentClass}`}>
-                                {blockContent || 'Empty paragraph'}
-                              </p>
-                            );
-                          } else {
-                            const baseClass = `font-bold text-[#0f766e]${contentClass}`;
-                            if (level === 1) {
                               return renderContentElement(
-                                <h1 key={block.id} className={`${baseClass} text-4xl md:text-5xl mt-12 mb-6 leading-tight`} style={{ fontFamily: '"Playfair Display", serif' }}>
-                                  {blockContent || 'Empty heading'}
-                                </h1>
+                                <p key={block.id} className={`mb-6 leading-relaxed text-gray-800 text-base${contentClass}`} dangerouslySetInnerHTML={{ __html: parseFormattedText(blockContent || 'Empty paragraph') }} />
                               );
-                            } else if (level === 2) {
-                              return renderContentElement(
-                                <h2 key={block.id} className={`${baseClass} text-3xl md:text-4xl mt-10 mb-5 leading-tight`} style={{ fontFamily: '"Playfair Display", serif' }}>
-                                  {blockContent || 'Empty heading'}
-                                </h2>
-                              );
-                            } else if (level === 3) {
-                              return renderContentElement(
-                                <h3 key={block.id} className={`${baseClass} text-2xl md:text-3xl mt-8 mb-4 leading-tight`} style={{ fontFamily: '"Playfair Display", serif' }}>
-                                  {blockContent || 'Empty heading'}
-                                </h3>
-                              );
+                            } else {
+                              const baseClass = `font-bold text-[#0f766e]${contentClass}`;
+                              const formattedContent = parseFormattedText(blockContent || 'Empty heading');
+                              if (level === 1) {
+                                return renderContentElement(
+                                  <h1 key={block.id} className={`${baseClass} text-4xl md:text-5xl mt-12 mb-6 leading-tight`} style={{ fontFamily: '"Playfair Display", serif' }} dangerouslySetInnerHTML={{ __html: formattedContent }} />
+                                );
+                              } else if (level === 2) {
+                                return renderContentElement(
+                                  <h2 key={block.id} className={`${baseClass} text-3xl md:text-4xl mt-10 mb-5 leading-tight`} style={{ fontFamily: '"Playfair Display", serif' }} dangerouslySetInnerHTML={{ __html: formattedContent }} />
+                                );
+                              } else if (level === 3) {
+                                return renderContentElement(
+                                  <h3 key={block.id} className={`${baseClass} text-2xl md:text-3xl mt-8 mb-4 leading-tight`} style={{ fontFamily: '"Playfair Display", serif' }} dangerouslySetInnerHTML={{ __html: formattedContent }} />
+                                );
+                              }
                             }
-                          }
                           break;
 
                         case 'image':
@@ -1145,7 +1300,7 @@ const getContextFromForm = (): LLMSuggestionContext & { content?: string } => {
             </div>
           </div>
         )}
-      </form>
-    </div>
-  );
-}
+        </form>
+      </div>
+    );
+  }

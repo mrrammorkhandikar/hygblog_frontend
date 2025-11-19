@@ -85,6 +85,136 @@ type ContentBlock = {
   affiliateLink?: { type: 'affiliate' | 'custom' | null; id?: string; name?: string; url?: string };
 };
 
+// Format selected text in textarea
+function formatSelectedText(textarea: HTMLTextAreaElement, startTag: string, endTag: string) {
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  const selectedText = textarea.value.substring(start, end);
+
+  if (selectedText) {
+    const newText = startTag + selectedText + endTag;
+    const beforeText = textarea.value.substring(0, start);
+    const afterText = textarea.value.substring(end);
+
+    textarea.value = beforeText + newText + afterText;
+    textarea.selectionStart = start + startTag.length;
+    textarea.selectionEnd = end + startTag.length;
+
+    // Trigger change event
+    const event = new Event('input', { bubbles: true });
+    textarea.dispatchEvent(event);
+  }
+}
+
+// Parse text formatting for preview
+function parseFormattedText(text: string): string {
+  if (!text) return '';
+
+  // Convert markdown-style formatting to HTML
+  let formatted = text;
+
+  // Bold: **text** -> <strong>text</strong>
+  formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+  // Italic: *text* -> <em>text</em>
+  formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+  // Underline: <u>text</u> -> <u>text</u> (already HTML)
+  // Note: This is already HTML so it will be rendered
+
+  return formatted;
+}
+
+// Auto-generate SEO from content
+function generateSEO(title: string, excerpt: string, category: string, tagNames: string[], contentBlocks: ContentBlock[]) {
+  // Helper to extract text from content blocks
+  const extractContentText = (blocks: ContentBlock[]): string => {
+    return blocks.map(block => {
+      if (block.type === 'text') {
+        return block.content;
+      }
+      return '';
+    }).join(' ').trim();
+  };
+
+  const contentText = extractContentText(contentBlocks);
+  const fullContext = [title, excerpt, category, ...tagNames, contentText].join(' ').toLowerCase();
+
+  // Generate SEO Title (limited to 60 chars)
+  const seoTitle = title && title.trim() ? title.trim().substring(0, 60) : 'New Blog Post';
+
+  // Generate SEO Description (based on excerpt or first content paragraph, limited to 160 chars)
+  let seoDesc = '';
+  if (excerpt.trim()) {
+    seoDesc = excerpt.trim().substring(0, 160);
+  } else if (contentText) {
+    const firstPara = contentBlocks.find(b => b.type === 'text' && b.content.trim())?.content.trim();
+    if (firstPara) {
+      seoDesc = firstPara.substring(0, 160);
+    }
+  } else {
+    seoDesc = `Learn about ${category} - ${seoTitle}`;
+  }
+
+  // Generate Keywords (extract from title, tags, category, and content)
+  const keywords: string[] = [];
+
+  // Add title words (important keywords)
+  if (title) {
+    const titleWords = title.toLowerCase().split(/\s+/).filter(w => w.length > 2 && !['the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'had', 'her', 'was', 'one', 'our', 'out', 'day', 'get', 'has', 'him', 'his', 'how', 'its', 'may', 'new', 'now', 'old', 'see', 'two', 'who', 'boy', 'did', 'her', 'she', 'too', 'car'].includes(w));
+    keywords.push(...titleWords.slice(0, 3));
+  }
+
+  // Add category
+  if (category) {
+    keywords.push(category.toLowerCase());
+  }
+
+  // Add tags
+  keywords.push(...tagNames.map(t => t.toLowerCase()));
+
+  // Extract additional keywords from content (basic frequency)
+  if (contentText) {
+    const words = contentText.toLowerCase().match(/\b\w{4,}\b/g) || [];
+    const wordFreq: { [key: string]: number } = {};
+    words.forEach(word => {
+      if (!['that', 'with', 'have', 'this', 'will', 'your', 'from', 'they', 'know', 'want', 'been', 'good', 'much', 'some', 'time', 'very', 'when', 'come', 'here', 'just', 'like', 'long', 'make', 'many', 'over', 'such', 'take', 'than', 'then', 'them', 'well', 'were', 'what', 'when', 'where', 'which', 'while', 'would', 'about', 'after', 'again', 'best', 'could', 'every', 'first', 'great', 'other', 'right', 'small', 'still', 'there', 'these', 'think', 'three', 'under', 'water', 'where', 'which', 'while', 'would'].includes(word)) {
+        wordFreq[word] = (wordFreq[word] || 0) + 1;
+      }
+    });
+
+    const topWords = Object.entries(wordFreq)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 5)
+      .map(([word]) => word);
+
+    keywords.push(...topWords);
+  }
+
+  // Remove duplicates and limit to 7 keywords
+  const uniqueKeywords = Array.from(new Set(keywords)).slice(0, 7);
+  const seoKeywords = uniqueKeywords.join(', ');
+
+  // Ensure at least 5 keywords if possible
+  if (uniqueKeywords.length < 5 && fullContext.includes('health') && !keywords.includes('health')) {
+    uniqueKeywords.push('health');
+  }
+  if (uniqueKeywords.length < 5 && fullContext.includes('care') && !keywords.includes('care')) {
+    uniqueKeywords.push('care');
+  }
+  if (uniqueKeywords.length < 5 && fullContext.includes('hygiene') && !keywords.includes('hygiene')) {
+    uniqueKeywords.push('hygiene');
+  }
+  if (uniqueKeywords.length < 6 && fullContext.includes('tips') && !keywords.includes('tips')) {
+    uniqueKeywords.push('tips');
+  }
+  if (uniqueKeywords.length < 7 && fullContext.includes('guide') && !keywords.includes('guide')) {
+    uniqueKeywords.push('guide');
+  }
+
+  return { seoTitle, seoDesc, seoKeywords: uniqueKeywords.join(', ') };
+}
+
 export default function CreatePost() {
   const [title, setTitle] = useState('');
   const [excerpt, setExcerpt] = useState('');
@@ -148,12 +278,26 @@ export default function CreatePost() {
     };
   };
 
-  // Debounced real-time suggestions
-  const titleSuggestionsHook = useDebouncedSuggestions('title', getContextFromForm, 1200);
-  const excerptSuggestionsHook = useDebouncedSuggestions('excerpt', getContextFromForm, 1500);
-  const seoTitleSuggestionsHook = useDebouncedSuggestions('seo_title', getContextFromForm, 1200);
-  const seoDescriptionSuggestionsHook = useDebouncedSuggestions('seo_description', getContextFromForm, 1500);
-  const seoKeywordSuggestionsHook = useDebouncedSuggestions('seo_keywords', getContextFromForm, 1600);
+  // Auto-generate SEO when content changes
+  useEffect(() => {
+    const categoryName = categories.find(c => c.id === selectedCategoryId)?.name ?? '';
+    const tagNames = selectedTagIds.map(tagId => {
+      const tag = tags.find(t => t.id === tagId);
+      return tag ? tag.name : '';
+    }).filter(name => name.length > 0);
+
+    const { seoTitle: newSeoTitle, seoDesc: newSeoDesc, seoKeywords: newSeoKeywords } = generateSEO(
+      title,
+      excerpt,
+      categoryName,
+      tagNames,
+      contentBlocks
+    );
+
+    setSeoTitle(newSeoTitle);
+    setSeoDescription(newSeoDesc);
+    setSeoKeywords(newSeoKeywords);
+  }, [title, excerpt, selectedCategoryId, selectedTagIds, contentBlocks, categories, tags]);
 
   // Generate unique slug from title
   const generateSlug = (title: string): string => {
@@ -237,7 +381,7 @@ export default function CreatePost() {
       id: Date.now().toString(),
       type,
       content: '',
-      metadata: type === 'text' ? { level: 3 } : type === 'image' ? { size: 'medium', alt: '' } : undefined,
+      metadata: type === 'text' ? { level: 1 } : type === 'image' ? { size: 'medium', alt: '' } : undefined,
       affiliateLink: { type: null }
     };
 
@@ -446,7 +590,7 @@ export default function CreatePost() {
   if (!isClient || !token) return null;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 p-4">
+    <form onSubmit={handleSubmit} className="max-w-4xl mx-auto space-y-8 p-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Create New Post</h1>
         <button
@@ -458,495 +602,431 @@ export default function CreatePost() {
         </button>
       </div>
 
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">{error}</div>
-      )}
+      {error && <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">{error}</div>}
 
-      <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Basic Information */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border space-y-6">
-          <h2 className="text-lg font-semibold text-gray-900">Basic Information</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="md:col-span-2">
-              <label htmlFor="title" className="block text-sm font-medium text-black mb-2">Title *</label>
-              <div className="relative">
-                <input
-                  id="title"
-                  type="text"
-                  value={title}
-                  onChange={(e) => {
-                    setTitle(e.target.value);
-                    setErrors(prev => ({ ...prev, title: '' }));
-                    titleSuggestionsHook.triggerSuggestions(e.target.value);
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 text-black placeholder-gray-500"
-                  placeholder="Enter post title..."
-                  required
-                />
-                {titleSuggestionsHook.showSuggestions && titleSuggestionsHook.suggestions.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 z-10 bg-white border border-gray-200 rounded-b-md shadow-lg max-h-40 overflow-y-auto">
-                    {titleSuggestionsHook.suggestions.map((suggestion, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => {
-                          setTitle(suggestion);
-                          setErrors(prev => ({ ...prev, title: '' }));
-                        }}
-                        className="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 first:rounded-t-none rounded-none border-b border-gray-100 last:border-b-0"
-                      >
-                        {suggestion}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-              {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title}</p>}
+      {/* Basic Information */}
+      <div className="bg-white p-6 rounded-lg shadow-sm border space-y-6">
+        <h2 className="text-lg font-semibold text-gray-900">Basic Information</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="md:col-span-2">
+            <label htmlFor="title" className="block text-sm font-medium text-black mb-2">Title *</label>
+            <div className="relative">
+              <input
+                id="title"
+                type="text"
+                value={title}
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  setErrors(prev => ({ ...prev, title: '' }));
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 text-black placeholder-gray-500"
+                placeholder="Enter post title..."
+                required
+              />
             </div>
-            <div className="md:col-span-2">
-              <label htmlFor="excerpt" className="block text-sm font-medium text-black mb-2">Excerpt</label>
-              <div className="relative">
-                <textarea
-                  id="excerpt"
-                  value={excerpt}
-                  onChange={(e) => {
-                    setExcerpt(e.target.value);
-                    excerptSuggestionsHook.triggerSuggestions(e.target.value);
-                  }}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 text-black placeholder-gray-500"
-                  placeholder="Brief description..."
-                />
-                {excerptSuggestionsHook.showSuggestions && excerptSuggestionsHook.suggestions.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 z-10 bg-white border border-gray-200 rounded-b-md shadow-lg max-h-40 overflow-y-auto">
-                    {excerptSuggestionsHook.suggestions.map((suggestion, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => setExcerpt(suggestion)}
-                        className="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 first:rounded-t-none rounded-none border-b border-gray-100 last:border-b-0"
-                      >
-                        {suggestion}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-            <div>
-                <label htmlFor="author" className="block text-sm font-medium text-black mb-2">Author</label>
-              {currentUser?.role === 'admin' ? (
-                <select
-                  id="author"
-                  value={author}
-                  onChange={(e) => setAuthor(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 text-black"
-                >
-                  <option value={currentUser.username}>{currentUser.username}</option>
-                  {authors.map(auth => (
-                    <option key={auth.id} value={auth.blog_name || auth.username}>
-                      {auth.blog_name || auth.username}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <input
-                  id="author"
-                  type="text"
-                  value={author}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-black"
-                  readOnly
-                />
-              )}
-            </div>
-            {currentUser?.role === 'admin' && (
-              <div className="flex items-center space-x-6">
-                <label className="flex items-center">
-                  <input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} className="rounded border-gray-300 text-teal-600" />
-                  <span className="ml-2 text-sm text-gray-700">Featured Post</span>
-                </label>
-                <label className="flex items-center">
-                  <input type="checkbox" checked={published} onChange={(e) => setPublished(e.target.checked)} className="rounded border-gray-300 text-teal-600" />
-                  <span className="ml-2 text-sm text-gray-700">Publish Immediately</span>
-                </label>
-              </div>
-            )}
+            {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title}</p>}
           </div>
-        </div>
-
-        {/* Title Image */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900">Title Image</h2>
-          <ImageUploadManager
-            onImageUpload={(file, url) => { setTitleImage(file); setTitleImagePreview(url); setTitleImageUrl(url); }}
-            onImageRemove={() => { setTitleImage(null); setTitleImagePreview(null); setTitleImageUrl(null); }}
-            maxFileSize={5 * 1024 * 1024}
-            multiple={false}
-            existingImages={titleImagePreview ? [titleImagePreview] : []}
-            uploadEndpoint="/image-upload/title"
-            showPreview={true}
-          />
-        </div>
-
-        {/* Category & Tags */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border space-y-6">
-          <h2 className="text-lg font-semibold text-gray-900">Category & Tags</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label htmlFor="category" className="block text-sm font-medium text-black mb-2">Category</label>
+          <div className="md:col-span-2">
+            <label htmlFor="excerpt" className="block text-sm font-medium text-black mb-2">Excerpt</label>
+            <div className="relative">
+              <textarea
+                id="excerpt"
+                value={excerpt}
+                onChange={(e) => setExcerpt(e.target.value)}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 text-black placeholder-gray-500"
+                placeholder="Brief description..."
+              />
+            </div>
+          </div>
+          <div>
+            <label htmlFor="author" className="block text-sm font-medium text-black mb-2">Author</label>
+            {currentUser?.role === 'admin' ? (
               <select
-                id="category"
-                value={selectedCategoryId}
-                onChange={(e) => setSelectedCategoryId(e.target.value)}
+                id="author"
+                value={author}
+                onChange={(e) => setAuthor(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 text-black"
               >
-                <option value="">Select a category...</option>
-                {categories.map(cat => (
-                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                <option value={currentUser.username}>{currentUser.username}</option>
+                {authors.map(auth => (
+                  <option key={auth.id} value={auth.blog_name || auth.username}>
+                    {auth.blog_name || auth.username}
+                  </option>
                 ))}
               </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-black mb-2">Tags</label>
+            ) : (
               <input
+                id="author"
                 type="text"
-                value={tagSearchTerm}
-                onChange={(e) => setTagSearchTerm(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 text-black placeholder-gray-500"
-                placeholder="Search tags..."
+                value={author}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-black"
+                readOnly
               />
-              <div className="max-h-40 overflow-y-auto border border-gray-200 rounded-md p-3 space-y-2 mt-2">
-                {filteredTags.map(tag => (
-                  <label key={tag.id} className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={selectedTagIds.includes(tag.id)}
-                      onChange={() => toggleTag(tag.id)}
-                      className="rounded border-gray-300 text-teal-600"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">{tag.name}</span>
-                  </label>
-                ))}
-                {filteredTags.length === 0 && <p className="text-sm text-gray-500">No tags found</p>}
-              </div>
+            )}
+          </div>
+          {currentUser?.role === 'admin' && (
+            <div className="flex items-center space-x-6">
+              <label className="flex items-center">
+                <input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} className="rounded border-gray-300 text-teal-600" />
+                <span className="ml-2 text-sm text-gray-700">Featured Post</span>
+              </label>
+              <label className="flex items-center">
+                <input type="checkbox" checked={published} onChange={(e) => setPublished(e.target.checked)} className="rounded border-gray-300 text-teal-600" />
+                <span className="ml-2 text-sm text-gray-700">Publish Immediately</span>
+              </label>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Title Image */}
+      <div className="bg-white p-6 rounded-lg shadow-sm border space-y-4">
+        <h2 className="text-lg font-semibold text-gray-900">Title Image</h2>
+        <ImageUploadManager
+          onImageUpload={(file, url) => { setTitleImage(file); setTitleImagePreview(url); setTitleImageUrl(url); }}
+          onImageRemove={() => { setTitleImage(null); setTitleImagePreview(null); setTitleImageUrl(null); }}
+          maxFileSize={5 * 1024 * 1024}
+          multiple={false}
+          existingImages={titleImagePreview ? [titleImagePreview] : []}
+          uploadEndpoint="/image-upload/title"
+          showPreview={true}
+        />
+      </div>
+
+      {/* Category & Tags */}
+      <div className="bg-white p-6 rounded-lg shadow-sm border space-y-6">
+        <h2 className="text-lg font-semibold text-gray-900">Category & Tags</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label htmlFor="category" className="block text-sm font-medium text-black mb-2">Category</label>
+            <select
+              id="category"
+              value={selectedCategoryId}
+              onChange={(e) => setSelectedCategoryId(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 text-black"
+            >
+              <option value="">Select a category...</option>
+              {categories.map(cat => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-black mb-2">Tags</label>
+            <input
+              type="text"
+              value={tagSearchTerm}
+              onChange={(e) => setTagSearchTerm(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 text-black placeholder-gray-500"
+              placeholder="Search tags..."
+            />
+            <div className="max-h-40 overflow-y-auto border border-gray-200 rounded-md p-3 space-y-2 mt-2">
+              {filteredTags.map(tag => (
+                <label key={tag.id} className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={selectedTagIds.includes(tag.id)}
+                    onChange={() => toggleTag(tag.id)}
+                    className="rounded border-gray-300 text-teal-600"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">{tag.name}</span>
+                </label>
+              ))}
+              {filteredTags.length === 0 && <p className="text-sm text-gray-500">No tags found</p>}
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Content Blocks */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">Content</h2>
-            <div className="flex space-x-2">
-              <button type="button" onClick={() => addContentBlock('text')} className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">Add Text</button>
-              <button type="button" onClick={() => addContentBlock('image')} className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700">Add Image</button>
-              <button type="button" onClick={() => addContentBlock('ul')} className="px-3 py-1 bg-purple-600 text-white rounded text-sm hover:bg-purple-700">Add Bullet List</button>
-              <button type="button" onClick={() => addContentBlock('ol')} className="px-3 py-1 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700">Add Numbered List</button>
-            </div>
+      {/* Content Blocks */}
+      <div className="bg-white p-6 rounded-lg shadow-sm border space-y-6">
+        <h2 className="text-lg font-semibold text-gray-900">Content</h2>
+
+        <div className="space-y-4 relative">
+          <div className="absolute bottom-4 right-4 flex space-x-2 bg-white p-2 rounded-lg shadow-md border">
+            <button type="button" onClick={() => addContentBlock('text')} className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700" title="Add Text Block">📄</button>
+            <button type="button" onClick={() => addContentBlock('image')} className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700" title="Add Image Block">🖼️</button>
+            <button type="button" onClick={() => addContentBlock('ul')} className="px-3 py-1 bg-purple-600 text-white rounded text-sm hover:bg-purple-700" title="Add Bullet List">•</button>
+            <button type="button" onClick={() => addContentBlock('ol')} className="px-3 py-1 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700" title="Add Numbered List">1.</button>
           </div>
 
-          <div className="space-y-4">
-            {contentBlocks.map((block, index) => (
-              <div key={block.id} className="border border-gray-200 rounded-lg p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">
-                    {block.type === 'text' ? 'Text' : block.type === 'image' ? 'Image' : block.type === 'ul' ? 'Bullet List' : 'Numbered List'} #{index + 1}
-                  </span>
-                  <div className="flex items-center space-x-2">
-                    <button type="button" onClick={() => moveContentBlock(block.id, 'up')} disabled={index === 0} className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50">Up</button>
-                    <button type="button" onClick={() => moveContentBlock(block.id, 'down')} disabled={index === contentBlocks.length - 1} className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50">Down</button>
-                    <button type="button" onClick={() => removeContentBlock(block.id)} className="p-1 text-red-400 hover:text-red-600">×</button>
+          {contentBlocks.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="text-4xl mb-4">📝</div>
+              <p className="text-gray-500 mb-4">No content blocks yet. Click the buttons below to add some content.</p>
+              <div className="flex justify-center space-x-2">
+                <button type="button" onClick={() => addContentBlock('text')} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Add Text Block</button>
+                <button type="button" onClick={() => addContentBlock('image')} className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Add Image Block</button>
+                <button type="button" onClick={() => addContentBlock('ul')} className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">Add Bullet List</button>
+                <button type="button" onClick={() => addContentBlock('ol')} className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Add Numbered List</button>
+              </div>
+            </div>
+          ) : (
+            <>
+              {contentBlocks.map((block, index) => (
+                <div key={block.id} className="border border-gray-200 rounded-lg p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">
+                      {block.type === 'text' ? 'Text' : block.type === 'image' ? 'Image' : block.type === 'ul' ? 'Bullet List' : 'Numbered List'} #{index + 1}
+                    </span>
+                    <div className="flex items-center space-x-2">
+                      <button type="button" onClick={() => moveContentBlock(block.id, 'up')} disabled={index === 0} className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50">Up</button>
+                      <button type="button" onClick={() => moveContentBlock(block.id, 'down')} disabled={index === contentBlocks.length - 1} className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50">Down</button>
+                      <button type="button" onClick={() => removeContentBlock(block.id)} className="p-1 text-red-400 hover:text-red-600">×</button>
+                    </div>
                   </div>
-                </div>
 
-                {/* Block Content */}
-                {block.type === 'text' ? (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <label className="text-sm text-gray-600">Type:</label>
-                      <select
-                        value={block.metadata?.level || 0}
-                        onChange={(e) => updateContentBlock(block.id, { metadata: { ...block.metadata, level: Number(e.target.value) } })}
-                        className="px-2 py-1 border border-gray-300 rounded text-sm text-black"
-                      >
-                        <option value={1}>H1</option>
-                        <option value={2}>H2</option>
-                        <option value={3}>H3</option>
-                        <option value={0}>Paragraph</option>
-                      </select>
-                    </div>
-                    </div>
-                    <textarea
-                      value={block.content}
-                      onChange={(e) => updateContentBlock(block.id, { content: e.target.value })}
-                      rows={4}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 text-black placeholder-gray-500"
-                      placeholder="Enter text..."
-                    />
-                  </div>
-                ) : block.type === 'image' ? (
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-3">
-                      <label className="text-sm text-gray-600">Size:</label>
-                      <select
-                        value={block.metadata?.size || 'medium'}
-                        onChange={(e) => updateContentBlock(block.id, { metadata: { ...block.metadata, size: e.target.value as any } })}
-                        className="px-2 py-1 border text-black border-gray-300 rounded text-sm"
-                      >
-                        <option value="small">Small</option>
-                        <option value="medium">Medium</option>
-                        <option value="large">Large</option>
-                        <option value="custom">Custom</option>
-                      </select>
-                    </div>
-                    {block.metadata?.size === 'custom' && (
-                      <div className="flex space-x-3 text-black">
-                        <input type="number" placeholder="Width" value={block.metadata?.width || ''} onChange={(e) => updateContentBlock(block.id, { metadata: { ...block.metadata, width: Number(e.target.value) } })} className="px-2 py-1 border border-gray-300 rounded text-sm w-20" />
-                        <input type="number" placeholder="Height" value={block.metadata?.height || ''} onChange={(e) => updateContentBlock(block.id, { metadata: { ...block.metadata, height: Number(e.target.value) } })} className="px-2 py-1 border border-gray-300 rounded text-sm w-20" />
-                      </div>
-                    )}
-                    <input
-                      type="text"
-                      value={block.metadata?.alt || ''}
-                      onChange={(e) => updateContentBlock(block.id, { metadata: { ...block.metadata, alt: e.target.value } })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 text-black placeholder-gray-500"
-                      placeholder="Alt text..."
-                    />
-                    <ImageUploadManager
-                      onImageUpload={(file, url) => updateContentBlock(block.id, { content: url })}
-                      maxFileSize={10 * 1024 * 1024}
-                      multiple={false}
-                      existingImages={block.content ? [block.content] : []}
-                      uploadEndpoint="/image-upload"
-                      showPreview={true}
-                    />
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="text-sm font-medium text-gray-700">
-                        {block.type === 'ul' ? 'Bullet List' : 'Numbered List'}
-                      </label>
-                      <button type="button" onClick={() => addListItem(block.id)} className="px-2 py-1 bg-teal-600 text-white rounded text-xs hover:bg-teal-700">
-                        Add Item
-                      </button>
-                    </div>
-
-                    <div className="space-y-2 pl-2 border-l-2 border-gray-200">
-                      {(block.listItems || []).map((item, itemIdx) => (
-                        <div key={item.id} className="space-y-2 border border-gray-200 rounded p-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-medium text-gray-500">Item #{itemIdx + 1}</span>
-                            <div className="flex space-x-1">
-                              {item.type === 'text' && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const nestedType = block.type === 'ul' ? 'ul' : 'ol';
-                                    updateListItem(block.id, item.id, {
-                                      nestedList: item.nestedList || { type: nestedType, items: [] }
-                                    });
-                                    if (!item.nestedList?.items.length) addListItem(block.id, item.id);
-                                  }}
-                                  className="px-1 py-0.5 bg-purple-600 text-white rounded text-xs hover:bg-purple-700"
-                                >
-                                  {item.nestedList ? 'Edit Nested' : 'Add Nested'}
-                                </button>
-                              )}
-                              <button type="button" onClick={() => removeListItem(block.id, item.id)} className="px-1 py-0.5 bg-red-600 text-white rounded text-xs hover:bg-red-700">
-                                Remove
-                              </button>
-                            </div>
-                          </div>
-
+                  {/* Block Content */}
+                  {block.type === 'text' ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <label className="text-sm text-gray-600">Type:</label>
                           <select
-                            value={item.type}
-                            onChange={(e) => updateListItem(block.id, item.id, { type: e.target.value as 'text' | 'image' })}
-                            className="px-2 py-1 border border-gray-300 rounded text-sm w-full"
+                            value={block.metadata?.level || 0}
+                            onChange={(e) => updateContentBlock(block.id, { metadata: { ...block.metadata, level: Number(e.target.value) } })}
+                            className="px-2 py-1 border border-gray-300 rounded text-sm text-black"
                           >
-                            <option value="text">Text</option>
-                            <option value="image">Image</option>
+                            <option value={1}>H1</option>
+                            <option value={2}>H2</option>
+                            <option value={3}>H3</option>
+                            <option value={0}>Paragraph</option>
                           </select>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-1 mb-2 bg-gray-50 p-2 rounded">
+                        <button type="button" onClick={() => {
+                          const textarea = document.getElementById(`text-block-${block.id}`) as HTMLTextAreaElement;
+                          if (textarea) formatSelectedText(textarea, '**', '**');
+                        }} className="px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold" title="Bold">B</button>
+                        <button type="button" onClick={() => {
+                          const textarea = document.getElementById(`text-block-${block.id}`) as HTMLTextAreaElement;
+                          if (textarea) formatSelectedText(textarea, '*', '*');
+                        }} className="px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded text-xs italic" title="Italic">I</button>
+                        <button type="button" onClick={() => {
+                          const textarea = document.getElementById(`text-block-${block.id}`) as HTMLTextAreaElement;
+                          if (textarea) formatSelectedText(textarea, '<u>', '</u>');
+                        }} className="px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded text-xs underline" title="Underline">U</button>
+                      </div>
+                      <textarea
+                        id={`text-block-${block.id}`}
+                        value={block.content}
+                        onChange={(e) => updateContentBlock(block.id, { content: e.target.value })}
+                        rows={4}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 text-black placeholder-gray-500"
+                        placeholder="Enter text..."
+                      />
+                    </div>
+                  ) : block.type === 'image' ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-3">
+                        <label className="text-sm text-gray-600">Size:</label>
+                        <select
+                          value={block.metadata?.size || 'medium'}
+                          onChange={(e) => updateContentBlock(block.id, { metadata: { ...block.metadata, size: e.target.value as any } })}
+                          className="px-2 py-1 border text-black border-gray-300 rounded text-sm"
+                        >
+                          <option value="small">Small</option>
+                          <option value="medium">Medium</option>
+                          <option value="large">Large</option>
+                          <option value="custom">Custom</option>
+                        </select>
+                      </div>
+                      {block.metadata?.size === 'custom' && (
+                        <div className="flex space-x-3 text-black">
+                          <input type="number" placeholder="Width" value={block.metadata?.width || ''} onChange={(e) => updateContentBlock(block.id, { metadata: { ...block.metadata, width: Number(e.target.value) } })} className="px-2 py-1 border border-gray-300 rounded text-sm w-20" />
+                          <input type="number" placeholder="Height" value={block.metadata?.height || ''} onChange={(e) => updateContentBlock(block.id, { metadata: { ...block.metadata, height: Number(e.target.value) } })} className="px-2 py-1 border border-gray-300 rounded text-sm w-20" />
+                        </div>
+                      )}
+                      <input
+                        type="text"
+                        value={block.metadata?.alt || ''}
+                        onChange={(e) => updateContentBlock(block.id, { metadata: { ...block.metadata, alt: e.target.value } })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 text-black placeholder-gray-500"
+                        placeholder="Alt text..."
+                      />
+                      <ImageUploadManager
+                        onImageUpload={(file, url) => updateContentBlock(block.id, { content: url })}
+                        maxFileSize={10 * 1024 * 1024}
+                        multiple={false}
+                        existingImages={block.content ? [block.content] : []}
+                        uploadEndpoint="/image-upload"
+                        showPreview={true}
+                      />
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-sm font-medium text-gray-700">
+                          {block.type === 'ul' ? 'Bullet List' : 'Numbered List'}
+                        </label>
+                        <button type="button" onClick={() => addListItem(block.id)} className="px-2 py-1 bg-teal-600 text-white rounded text-xs hover:bg-teal-700">
+                          Add Item
+                        </button>
+                      </div>
 
-                          {item.type === 'text' ? (
-                            <textarea
-                              value={item.content}
-                              onChange={(e) => updateListItem(block.id, item.id, { content: e.target.value })}
-                              rows={2}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 text-black placeholder-gray-500"
-                              placeholder="List item text..."
-                            />
-                          ) : (
-                            <div className="space-y-2">
-                              <ImageUploadManager
-                                onImageUpload={(file, url) => updateListItem(block.id, item.id, { content: url })}
-                                maxFileSize={5 * 1024 * 1024}
-                                multiple={false}
-                                existingImages={item.content ? [item.content] : []}
-                                uploadEndpoint="/image-upload"
-                                showPreview={true}
-                              />
-                              <input
-                                type="text"
-                                value={item.imageMetadata?.alt || ''}
-                                onChange={(e) => updateListItem(block.id, item.id, { imageMetadata: { ...(item.imageMetadata || {}), alt: e.target.value } })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 text-black placeholder-gray-500"
-                                placeholder="Alt text..."
-                              />
-                            </div>
-                          )}
-
-                          {/* Nested List */}
-                          {item.nestedList && item.nestedList.items.length > 0 && (
-                            <div className="pl-4 mt-2 border-l-2 border-gray-200">
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="text-xs font-medium text-gray-500">Nested List</span>
-                                <button type="button" onClick={() => addListItem(block.id, item.id)} className="px-1 py-0.5 bg-teal-600 text-white rounded text-xs hover:bg-teal-700">
-                                  Add
+                      <div className="space-y-2 pl-2 border-l-2 border-gray-200">
+                        {(block.listItems || []).map((item, itemIdx) => (
+                          <div key={item.id} className="space-y-2 border border-gray-200 rounded p-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-medium text-gray-500">Item #{itemIdx + 1}</span>
+                              <div className="flex space-x-1">
+                                {item.type === 'text' && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const nestedType = block.type === 'ul' ? 'ul' : 'ol';
+                                      updateListItem(block.id, item.id, {
+                                        nestedList: item.nestedList || { type: nestedType, items: [] }
+                                      });
+                                      if (!item.nestedList?.items.length) addListItem(block.id, item.id);
+                                    }}
+                                    className="px-1 py-0.5 bg-purple-600 text-white rounded text-xs hover:bg-purple-700"
+                                  >
+                                    {item.nestedList ? 'Edit Nested' : 'Add Nested'}
+                                  </button>
+                                )}
+                                <button type="button" onClick={() => removeListItem(block.id, item.id)} className="px-1 py-0.5 bg-red-600 text-white rounded text-xs hover:bg-red-700">
+                                  Remove
                                 </button>
                               </div>
-                              {item.nestedList.items.map((nested, nIdx) => (
-                                <div key={nested.id} className="border border-gray-200 rounded p-2 mt-1">
-                                  <div className="flex justify-between text-xs">
-                                    <span>Nested #{nIdx + 1}</span>
-                                    <button type="button" onClick={() => removeListItem(block.id, nested.id, item.id)} className="text-red-600">×</button>
-                                  </div>
-                                  <textarea
-                                    value={nested.content}
-                                    onChange={(e) => updateListItem(block.id, nested.id, { content: e.target.value }, item.id)}
-                                    rows={1}
-                                    className="w-full text-sm mt-1 px-2 py-1 border rounded text-black placeholder-gray-500"
-                                  />
-                                </div>
-                              ))}
                             </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
 
-                {/* Affiliate Link */}
-                <div className="border-t pt-3 mt-3">
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">Affiliate Link (Optional)</h4>
-                  <div className="flex space-x-4 mb-2">
-                    <label className="flex items-center">
-                      <input type="radio" name={`aff-${block.id}`} value="custom" checked={block.affiliateLink?.type === 'custom'} onChange={() => updateContentBlock(block.id, { affiliateLink: { type: 'custom', name: '', url: '' } })} className="text-black placeholder-gray-500" />
-                      <span className="ml-1 text-sm text-black placeholder-gray-500">Custom</span>
-                    </label>
-                    <label className="flex items-center">
-                      <input type="radio" name={`aff-${block.id}`} value="none" checked={!block.affiliateLink?.type} onChange={() => updateContentBlock(block.id, { affiliateLink: { type: null } })} className="text-black placeholder-gray-500" />
-                      <span className="ml-1 text-sm text-black placeholder-gray-500">None</span>
-                    </label>
-                  </div>
+                            <select
+                              value={item.type}
+                              onChange={(e) => updateListItem(block.id, item.id, { type: e.target.value as 'text' | 'image' })}
+                              className="px-2 py-1 border border-gray-300 rounded text-sm w-full"
+                            >
+                              <option value="text">Text</option>
+                              <option value="image">Image</option>
+                            </select>
 
-                  {block.affiliateLink?.type === 'custom' && (
-                    <div className="space-y-2">
-                      <input type="text" placeholder="Button text" value={block.affiliateLink?.name || ''} onChange={(e) => updateContentBlock(block.id, { affiliateLink: { ...block.affiliateLink, name: e.target.value, type: block.affiliateLink?.type ?? null } })} className="w-full text-sm border rounded p-1 text-black placeholder-gray-500" />
-                      <input type="url" placeholder="https://..." value={block.affiliateLink?.url || ''} onChange={(e) => updateContentBlock(block.id, { affiliateLink: { ...block.affiliateLink, url: e.target.value, type: block.affiliateLink?.type || 'custom' } })} className="w-full text-sm border rounded p-1 text-black placeholder-gray-500" />
+                            {item.type === 'text' ? (
+                              <textarea
+                                value={item.content}
+                                onChange={(e) => updateListItem(block.id, item.id, { content: e.target.value })}
+                                rows={2}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 text-black placeholder-gray-500"
+                                placeholder="List item text..."
+                              />
+                            ) : (
+                              <div className="space-y-2">
+                                <ImageUploadManager
+                                  onImageUpload={(file, url) => updateListItem(block.id, item.id, { content: url })}
+                                  maxFileSize={5 * 1024 * 1024}
+                                  multiple={false}
+                                  existingImages={item.content ? [item.content] : []}
+                                  uploadEndpoint="/image-upload"
+                                  showPreview={true}
+                                />
+                                <input
+                                  type="text"
+                                  value={item.imageMetadata?.alt || ''}
+                                  onChange={(e) => updateListItem(block.id, item.id, { imageMetadata: { ...(item.imageMetadata || {}), alt: e.target.value } })}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 text-black placeholder-gray-500"
+                                  placeholder="Alt text..."
+                                />
+                              </div>
+                            )}
+
+                            {/* Nested List */}
+                            {item.nestedList && item.nestedList.items.length > 0 && (
+                              <div className="pl-4 mt-2 border-l-2 border-gray-200">
+                                <div className="flex items-center justify-between mb-1">
+                                  <span className="text-xs font-medium text-gray-500">Nested List</span>
+                                  <button type="button" onClick={() => addListItem(block.id, item.id)} className="px-1 py-0.5 bg-teal-600 text-white rounded text-xs hover:bg-teal-700">
+                                    Add
+                                  </button>
+                                </div>
+                                {item.nestedList.items.map((nested, nIdx) => (
+                                  <div key={nested.id} className="border border-gray-200 rounded p-2 mt-1">
+                                    <div className="flex justify-between text-xs">
+                                      <span>Nested #{nIdx + 1}</span>
+                                      <button type="button" onClick={() => removeListItem(block.id, nested.id, item.id)} className="text-red-600">×</button>
+                                    </div>
+                                    <textarea
+                                      value={nested.content}
+                                      onChange={(e) => updateListItem(block.id, nested.id, { content: e.target.value }, item.id)}
+                                      rows={1}
+                                      className="w-full text-sm mt-1 px-2 py-1 border rounded text-black placeholder-gray-500"
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
 
+                  {/* Affiliate Link */}
+                  <div className="border-t pt-3 mt-3">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">Affiliate Link (Optional)</h4>
+                    <div className="flex space-x-4 mb-2">
+                      <label className="flex items-center">
+                        <input type="radio" name={`aff-${block.id}`} value="custom" checked={block.affiliateLink?.type === 'custom'} onChange={() => updateContentBlock(block.id, { affiliateLink: { type: 'custom', name: '', url: '' } })} className="text-black placeholder-gray-500" />
+                        <span className="ml-1 text-sm text-black placeholder-gray-500">Custom</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input type="radio" name={`aff-${block.id}`} value="none" checked={!block.affiliateLink?.type} onChange={() => updateContentBlock(block.id, { affiliateLink: { type: null } })} className="text-black placeholder-gray-500" />
+                        <span className="ml-1 text-sm text-black placeholder-gray-500">None</span>
+                      </label>
+                    </div>
+
+                    {block.affiliateLink?.type === 'custom' && (
+                      <div className="space-y-2">
+                        <input type="text" placeholder="Button text" value={block.affiliateLink?.name || ''} onChange={(e) => updateContentBlock(block.id, { affiliateLink: { ...block.affiliateLink, name: e.target.value, type: block.affiliateLink?.type ?? null } })} className="w-full text-sm border rounded p-1 text-black placeholder-gray-500" />
+                        <input type="url" placeholder="https://..." value={block.affiliateLink?.url || ''} onChange={(e) => updateContentBlock(block.id, { affiliateLink: { ...block.affiliateLink, url: e.target.value, type: block.affiliateLink?.type || 'custom' } })} className="w-full text-sm border rounded p-1 text-black placeholder-gray-500" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* SEO */}
+        
         {/* SEO */}
         <div className="bg-white p-6 rounded-lg shadow-sm border space-y-6">
           <h2 className="text-lg font-semibold text-gray-900">SEO Settings</h2>
           <div className="space-y-4">
             <div>
-              <label htmlFor="seoTitle" className="block text-sm font-medium text-black mb-2">SEO Title</label>
-              <div className="relative">
-                <input
-                  id="seoTitle"
-                  type="text"
-                  value={seoTitle}
-                  onChange={(e) => {
-                    setSeoTitle(e.target.value);
-                    seoTitleSuggestionsHook.triggerSuggestions(e.target.value);
-                  }}
-                  placeholder="SEO Title"
-                  className="w-full px-3 py-2 border rounded-md text-black placeholder-gray-500"
-                />
-                {seoTitleSuggestionsHook.showSuggestions && seoTitleSuggestionsHook.suggestions.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 z-10 bg-white border border-gray-200 rounded-b-md shadow-lg max-h-40 overflow-y-auto">
-                    {seoTitleSuggestionsHook.suggestions.map((suggestion, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => setSeoTitle(suggestion)}
-                        className="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 first:rounded-t-none rounded-none border-b border-gray-100 last:border-b-0"
-                      >
-                        {suggestion}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <label htmlFor="seoTitle" className="block text-sm font-medium text-black mb-2">SEO Title (Auto-generated)</label>
+              <input
+                id="seoTitle"
+                type="text"
+                value={seoTitle}
+                onChange={(e) => setSeoTitle(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 text-black placeholder-gray-500"
+                placeholder="Auto-generated SEO title..."
+              />
             </div>
             <div>
-              <label htmlFor="seoDesc" className="block text-sm font-medium text-gray-700 mb-2">SEO Description</label>
-              <div className="relative">
-                <textarea
-                  id="seoDesc"
-                  value={seoDescription}
-                  onChange={(e) => {
-                    setSeoDescription(e.target.value);
-                    seoDescriptionSuggestionsHook.triggerSuggestions(e.target.value);
-                  }}
-                  rows={3}
-                  placeholder="SEO Description"
-                  className="w-full px-3 py-2 border rounded-md text-black placeholder-gray-500"
-                />
-                {seoDescriptionSuggestionsHook.showSuggestions && seoDescriptionSuggestionsHook.suggestions.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 z-10 bg-white border border-gray-200 rounded-b-md shadow-lg max-h-40 overflow-y-auto">
-                    {seoDescriptionSuggestionsHook.suggestions.map((suggestion, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => setSeoDescription(suggestion)}
-                        className="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 first:rounded-t-none rounded-none border-b border-gray-100 last:border-b-0"
-                      >
-                        {suggestion}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <label htmlFor="seoDesc" className="block text-sm font-medium text-gray-700 mb-2">SEO Description (Auto-generated)</label>
+              <textarea
+                id="seoDesc"
+                value={seoDescription}
+                onChange={(e) => setSeoDescription(e.target.value)}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 text-black placeholder-gray-500"
+                placeholder="Auto-generated SEO description..."
+              />
             </div>
             <div>
-              <label htmlFor="seoKeywords" className="block text-sm font-medium text-gray-700 mb-2">SEO Keywords</label>
-              <div className="relative">
-                <input
-                  id="seoKeywords"
-                  type="text"
-                  value={seoKeywords}
-                  onChange={(e) => {
-                    setSeoKeywords(e.target.value);
-                    seoKeywordSuggestionsHook.triggerSuggestions(e.target.value);
-                  }}
-                  placeholder="keyword1, keyword2"
-                  className="w-full px-3 py-2 border rounded-md text-black placeholder-gray-500"
-                />
-                {seoKeywordSuggestionsHook.showSuggestions && seoKeywordSuggestionsHook.suggestions.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 z-10 bg-white border border-gray-200 rounded-b-md shadow-lg max-h-40 overflow-y-auto">
-                    {seoKeywordSuggestionsHook.suggestions.map((suggestion, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => setSeoKeywords(suggestion)}
-                        className="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 first:rounded-t-none rounded-none border-b border-gray-100 last:border-b-0"
-                      >
-                        {suggestion}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <label htmlFor="seoKeywords" className="block text-sm font-medium text-gray-700 mb-2">SEO Keywords (Auto-generated)</label>
+              <input
+                id="seoKeywords"
+                type="text"
+                value={seoKeywords}
+                onChange={(e) => setSeoKeywords(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 text-black placeholder-gray-500"
+                placeholder="keyword1, keyword2, keyword3..."
+              />
             </div>
           </div>
         </div>
@@ -982,32 +1062,31 @@ export default function CreatePost() {
               </div>
               <div className="p-6">
                 {/* Preview Hero */}
-                <div className="relative h-64 bg-gradient-to-b from-[#f7fdff] to-[#eefdfa] flex items-center justify-center rounded-lg overflow-hidden mb-6">
-                  {titleImagePreview ? (
-                    <img src={titleImagePreview} alt={title} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="text-gray-400 text-center">
-                      <div className="text-6xl mb-2">🖼️</div>
-                      <p>No title image</p>
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-black bg-opacity-40"></div>
-                  <div className="relative z-10 text-center text-white p-6">
-                    {selectedCategoryId && (
-                      <div className="mb-4">
-                        <span className="bg-[#0f766e] text-white px-4 py-2 rounded-full text-sm font-medium">
-                          {categories.find(c => c.id === selectedCategoryId)?.name || 'Category'}
-                        </span>
+                <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
+                  <div className="flex items-start gap-6">
+                    {titleImagePreview ? (
+                      <div className="flex-shrink-0">
+                        <img src={titleImagePreview} alt={title} className="w-32 h-32 object-cover rounded-lg border" />
+                      </div>
+                    ) : (
+                      <div className="flex-shrink-0">
+                        <div className="w-32 h-32 bg-gray-100 border rounded-lg flex items-center justify-center">
+                          <span className="text-gray-400">🖼️</span>
+                        </div>
                       </div>
                     )}
-                    <h1 className="text-3xl md:text-4xl font-extrabold mb-4" style={{ fontFamily: `"Playfair Display", serif` }}>
-                      {title || 'Untitled Post'}
-                    </h1>
-                    {excerpt && (
-                      <p className="text-lg text-white/90 max-w-2xl mx-auto">
-                        {excerpt}
-                      </p>
-                    )}
+                    <div className="flex-1">
+                      {selectedCategoryId && (
+                        <div className="mb-3">
+                          <span className="bg-[#0f766e] text-white px-3 py-1 rounded-full text-sm font-medium">
+                            {categories.find(c => c.id === selectedCategoryId)?.name || 'Category'}
+                          </span>
+                        </div>
+                      )}
+                      <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-2" style={{ fontFamily: `"Playfair Display", serif` }}>
+                        {title || 'Untitled Post'}
+                      </h1>
+                    </div>
                   </div>
                 </div>
 
@@ -1026,6 +1105,13 @@ export default function CreatePost() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Excerpt */}
+                  {excerpt && (
+                    <div className="mb-8 text-gray-700 text-lg leading-relaxed">
+                      {excerpt}
+                    </div>
+                  )}
 
                   {/* Render Content Blocks */}
                   <div className="prose prose-slate max-w-none">
@@ -1057,31 +1143,24 @@ export default function CreatePost() {
                           if (metadata?.italic) contentClass += " italic";
                           if (metadata?.underline) contentClass += " underline";
 
-            if (level === 0) {
+                          if (level === 0) {
               return renderContentElement(
-                <p className={`mb-6 leading-relaxed text-gray-800 text-base${contentClass}`}>
-                  {blockContent || 'Empty paragraph'}
-                </p>
+                <p key={block.id} className={`mb-6 leading-relaxed text-gray-800 text-base${contentClass}`} dangerouslySetInnerHTML={{ __html: parseFormattedText(blockContent || 'Empty paragraph') }} />
               );
             } else {
               const baseClass = `font-bold text-[#0f766e]${contentClass}`;
+              const formattedContent = parseFormattedText(blockContent || 'Empty heading');
               if (level === 1) {
                 return renderContentElement(
-                  <h1 className={`${baseClass} text-4xl md:text-5xl mt-12 mb-6 leading-tight`} style={{ fontFamily: '"Playfair Display", serif' }}>
-                    {blockContent || 'Empty heading'}
-                  </h1>
+                  <h1 key={block.id} className={`${baseClass} text-4xl md:text-5xl mt-12 mb-6 leading-tight`} style={{ fontFamily: '"Playfair Display", serif' }} dangerouslySetInnerHTML={{ __html: formattedContent }} />
                 );
               } else if (level === 2) {
                 return renderContentElement(
-                  <h2 className={`${baseClass} text-3xl md:text-4xl mt-10 mb-5 leading-tight`} style={{ fontFamily: '"Playfair Display", serif' }}>
-                    {blockContent || 'Empty heading'}
-                  </h2>
+                  <h2 key={block.id} className={`${baseClass} text-3xl md:text-4xl mt-10 mb-5 leading-tight`} style={{ fontFamily: '"Playfair Display", serif' }} dangerouslySetInnerHTML={{ __html: formattedContent }} />
                 );
               } else if (level === 3) {
                 return renderContentElement(
-                  <h3 className={`${baseClass} text-2xl md:text-3xl mt-8 mb-4 leading-tight`} style={{ fontFamily: '"Playfair Display", serif' }}>
-                    {blockContent || 'Empty heading'}
-                  </h3>
+                  <h3 key={block.id} className={`${baseClass} text-2xl md:text-3xl mt-8 mb-4 leading-tight`} style={{ fontFamily: '"Playfair Display", serif' }} dangerouslySetInnerHTML={{ __html: formattedContent }} />
                 );
               }
             }
@@ -1119,7 +1198,7 @@ export default function CreatePost() {
                         case 'ol':
                           const ListTag = type;
                           return (
-                            <ListTag key={block.id} className="mb-8 pl-6 list-disc">
+                            <ListTag key={block.id} className="mb-8 pl-6 list-disc text-black">
                               {(listItems || []).map((item) => (
                                 <li key={item.id} className="mb-2">
                                   {item.type === 'text' ? (item.content || 'Empty item') : (
@@ -1163,6 +1242,5 @@ export default function CreatePost() {
           </div>
         )}
       </form>
-    </div>
   );
 }
