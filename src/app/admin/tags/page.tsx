@@ -1,6 +1,7 @@
 'use client';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { apiGet, apiPost, apiDelete, apiPut } from '../api';
+import ImageUploadManager from '../../../components/ImageUploadManager';
 
 type Tag = {
   id: string;
@@ -43,7 +44,7 @@ export default function AdminTags() {
   // Image upload
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const imageFileRef = useRef<HTMLInputElement>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   
   // Search and filter
   const [searchTerm, setSearchTerm] = useState('');
@@ -95,51 +96,34 @@ export default function AdminTags() {
       }));
       setImageFile(null);
       setImagePreview(null);
-      if (imageFileRef.current) {
-        imageFileRef.current.value = '';
-      }
+      setImageUrl(null);
     }
   }, [formData.tag_type]);
 
-  // Handle image file selection
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit to match backend
-        alert('Image size must be less than 5MB');
-        return;
-      }
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onload = (e) => setImagePreview(e.target?.result as string);
-      reader.readAsDataURL(file);
-    }
-  };
-
   // Reset form
   const resetForm = () => {
-    setFormData({ 
-      name: '', 
-      slug: '', 
-      description: '', 
+    setFormData({
+      name: '',
+      slug: '',
+      description: '',
       category_id: '',
       tag_type: 'regular' as TagType
     });
     setImageFile(null);
     setImagePreview(null);
+    setImageUrl(null);
     setIsEditing(false);
     setEditingId(null);
-    if (imageFileRef.current) imageFileRef.current.value = '';
   };
 
   // Validate form based on tag type
   const validateForm = () => {
     const errors: string[] = [];
-    
+
     if (!formData.name.trim()) {
       errors.push('Tag name is required');
     }
-    
+
     if (formData.tag_type === 'regular') {
       if (!formData.slug) {
         errors.push('Slug is required for regular tags');
@@ -147,20 +131,20 @@ export default function AdminTags() {
       if (!slugOptions.includes(formData.slug)) {
         errors.push('Please select a valid slug from the dropdown');
       }
-      
+
       // For regular tags, image is required when creating new tags
-      if (!isEditing && !imageFile && !imagePreview) {
+      if (!isEditing && !imageUrl && !imagePreview) {
         errors.push('Tag image is required for regular tags');
       }
     }
-    
+
     return errors;
   };
 
   // Handle create/update
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const validationErrors = validateForm();
     if (validationErrors.length > 0) {
       setError(validationErrors.join(', '));
@@ -171,45 +155,6 @@ export default function AdminTags() {
     setError(null);
 
     try {
-      let imageUrl = '';
-      
-      // Upload image if provided and tag type is regular
-      if (imageFile && formData.tag_type === 'regular') {
-        const imageFormData = new FormData();
-        imageFormData.append('tagImage', imageFile);
-        imageFormData.append('tagSlug', formData.slug);
-
-        console.log('Uploading tag image:', {
-          fileName: imageFile.name,
-          fileSize: imageFile.size,
-          fileType: imageFile.type,
-          tagSlug: formData.slug
-        });
-
-        const token = localStorage.getItem('adminToken');
-        console.log('Token available:', !!token);
-
-        const imageResponse = await fetch(`http://localhost:8080/image-upload/tag-image`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
-          body: imageFormData
-        });
-
-        console.log('Upload response status:', imageResponse.status);
-
-        if (imageResponse.ok) {
-          const imageData = await imageResponse.json();
-          console.log('Upload success:', imageData);
-          imageUrl = imageData.url;
-        } else {
-          const errorText = await imageResponse.text();
-          console.log('Upload error response:', errorText);
-          throw new Error(`Failed to upload icon: ${imageResponse.status} - ${errorText}`);
-        }
-      }
-
       const tagData: any = {
         name: formData.name.trim(),
         description: formData.description.trim() || null,
@@ -250,6 +195,7 @@ export default function AdminTags() {
       category_id: tag.category_id || '',
       tag_type: tag.tag_type
     });
+    setImageUrl(tag.image_url || null);
     setImagePreview(tag.image_url || null);
     setIsEditing(true);
     setEditingId(tag.id);
@@ -451,43 +397,15 @@ export default function AdminTags() {
               <label className="block text-sm font-medium text-black mb-2">
                 Tag Image *
               </label>
-              <div className="flex items-center space-x-4">
-                <input
-                  ref={imageFileRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="hidden"
-                />
-                <button
-                  type="button"
-                  onClick={() => imageFileRef.current?.click()}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-                >
-                  Choose Image
-                </button>
-                
-                {imagePreview && (
-                  <div className="relative">
-                    <img
-                      src={imagePreview}
-                      alt="Image preview"
-                      className="w-16 h-16 object-cover rounded border"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setImageFile(null);
-                        setImagePreview(null);
-                        if (imageFileRef.current) imageFileRef.current.value = '';
-                      }}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
-                    >
-                      ×
-                    </button>
-                  </div>
-                )}
-              </div>
+              <ImageUploadManager
+                onImageUpload={(file, url) => { setImageFile(file); setImagePreview(url); setImageUrl(url); }}
+                onImageRemove={() => { setImageFile(null); setImagePreview(null); setImageUrl(null); }}
+                maxFileSize={5 * 1024 * 1024}
+                multiple={false}
+                existingImages={imagePreview ? [imagePreview] : []}
+                uploadEndpoint="/image-upload/tag-image"
+                showPreview={true}
+              />
             </div>
           )}
 

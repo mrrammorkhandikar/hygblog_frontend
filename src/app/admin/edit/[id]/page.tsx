@@ -958,7 +958,7 @@ const getContextFromForm = (): LLMSuggestionContext & { content?: string } => {
                             <div key={item.id} className="space-y-2 border border-gray-200 rounded p-2">
                               <div className="flex items-center justify-between">
                                 <span className="text-xs font-medium text-gray-500">Item #{itemIdx + 1}</span>
-                                <div className="flex space-x-1">
+                                <div className="flex space-x-1 ">
                                   {item.type === 'text' && (
                                     <button
                                       type="button"
@@ -983,7 +983,7 @@ const getContextFromForm = (): LLMSuggestionContext & { content?: string } => {
                               <select
                                 value={item.type}
                                 onChange={(e) => updateListItem(block.id, item.id, { type: e.target.value as 'text' | 'image' })}
-                                className="px-2 py-1 border border-gray-300 rounded text-sm w-full"
+                                className="px-2 py-1 border border-gray-300 rounded text-sm w-full text-black"
                               >
                                 <option value="text">Text</option>
                                 <option value="image">Image</option>
@@ -994,7 +994,7 @@ const getContextFromForm = (): LLMSuggestionContext & { content?: string } => {
                                   value={item.content}
                                   onChange={(e) => updateListItem(block.id, item.id, { content: e.target.value })}
                                   rows={2}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none text-black focus:ring-2 focus:ring-teal-500"
                                   placeholder="List item text..."
                                 />
                               ) : (
@@ -1011,7 +1011,7 @@ const getContextFromForm = (): LLMSuggestionContext & { content?: string } => {
                                     type="text"
                                     value={item.imageMetadata?.alt || ''}
                                     onChange={(e) => updateListItem(block.id, item.id, { imageMetadata: { ...(item.imageMetadata || {}), alt: e.target.value } })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                    className="w-full px-3 py-2 border border-gray-300 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
                                     placeholder="Alt text..."
                                   />
                                 </div>

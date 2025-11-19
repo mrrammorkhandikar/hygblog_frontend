@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { apiGet, apiPost, apiDelete, apiPut } from '../api';
+import ImageUploadManager from '../../../components/ImageUploadManager';
 
 type Category = {
   id: string;
@@ -21,9 +22,11 @@ export default function AdminCategories() {
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
-    name: '',
-    icon: null as File | null
+    name: ''
   });
+  const [iconFile, setIconFile] = useState<File | null>(null);
+  const [iconPreview, setIconPreview] = useState<string | null>(null);
+  const [iconUrl, setIconUrl] = useState<string | null>(null);
   
   // Search, sort, pagination
   const [searchTerm, setSearchTerm] = useState('');
@@ -68,7 +71,10 @@ export default function AdminCategories() {
 
   // Reset form
   const resetForm = () => {
-    setFormData({ name: '', icon: null });
+    setFormData({ name: '' });
+    setIconFile(null);
+    setIconPreview(null);
+    setIconUrl(null);
     setIsEditing(false);
     setEditingId(null);
   };
@@ -76,7 +82,7 @@ export default function AdminCategories() {
   // Handle create/update
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name.trim()) {
       setError('Category name is required');
       return;
@@ -86,41 +92,10 @@ export default function AdminCategories() {
     setError(null);
 
     try {
-      let iconUrl = '';
-      
-      // Upload icon if provided
-      if (formData.icon) {
-        console.log('Uploading icon:', formData.icon.name, 'Size:', formData.icon.size);
-        console.log('Token available:', !!token);
-        
-        const iconFormData = new FormData();
-        iconFormData.append('icon', formData.icon);
-        
-        const response = await fetch('http://localhost:8080/image-upload/category-icon', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
-          body: iconFormData
-        });
-        
-        console.log('Upload response status:', response.status);
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Upload error response:', errorText);
-          throw new Error(`Failed to upload icon: ${response.status} - ${errorText}`);
-        }
-        
-        const uploadResult = await response.json();
-        console.log('Upload result:', uploadResult);
-        iconUrl = uploadResult.url;
-      }
-
       const categoryData: any = {
         name: formData.name.trim()
       };
-      
+
       if (iconUrl) {
         categoryData.icon = iconUrl;
       }
@@ -146,9 +121,10 @@ export default function AdminCategories() {
   // Handle edit
   const handleEdit = (category: Category) => {
     setFormData({
-      name: category.name,
-      icon: null
+      name: category.name
     });
+    setIconUrl(category.icon || category.icon_url || null);
+    setIconPreview(category.icon || category.icon_url || null);
     setIsEditing(true);
     setEditingId(category.id);
   };
@@ -255,16 +231,18 @@ export default function AdminCategories() {
                 required
               />
             </div>
-            <div>
-              <label htmlFor="icon" className="block text-sm font-medium text-black mb-2">
+            <div className="col-span-1">
+              <label className="block text-sm font-medium text-black mb-2">
                 Icon (optional)
               </label>
-              <input
-                id="icon"
-                type="file"
-                accept="image/*"
-                onChange={(e) => setFormData({ ...formData, icon: e.target.files?.[0] || null })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              <ImageUploadManager
+                onImageUpload={(file, url) => { setIconFile(file); setIconPreview(url); setIconUrl(url); }}
+                onImageRemove={() => { setIconFile(null); setIconPreview(null); setIconUrl(null); }}
+                maxFileSize={5 * 1024 * 1024}
+                multiple={false}
+                existingImages={iconPreview ? [iconPreview] : []}
+                uploadEndpoint="/image-upload/category-icon"
+                showPreview={true}
               />
             </div>
           </div>
