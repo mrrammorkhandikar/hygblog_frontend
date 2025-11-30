@@ -139,10 +139,10 @@ export default function ContactPage() {
                 Send us an email and we'll get back to you within 24 hours.
               </p>
               <a
-                href="mailto:drsayyedbushra@gmail.com"
+                href="mailto:drbushra@hygieneshelf.in"
                 className="text-[#0f766e] font-medium hover:text-[#06b6d4] transition"
               >
-                drsayyedbushra@gmail.com
+                drbushra@hygieneshelf.in
               </a>
             </motion.div>
 

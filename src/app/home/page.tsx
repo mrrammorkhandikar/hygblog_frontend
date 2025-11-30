@@ -447,13 +447,13 @@ export default function HomePage({ token = '' }: Partial<Props>) {
     {loading && <p className="text-center text-slate-500">Loading topics…</p>}
     {error && <p className="text-center text-red-500">{error}</p>}
 
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
       {[
         {
-          name: 'Holistic Health Hygiene Shelf',
-          slug: 'Holistic Health Hygiene Shelf',
-          image: '/Images/Holistic Health Hygiene Shelf.jpeg',
-          description: 'Comprehensive wellness and hygiene practices for overall health'
+          name: 'Oral Hygiene Shelf',
+          slug: 'Oral Hygiene Shelf',
+          image: '/Images/Oral Hygiene Shelf.jpeg',
+          description: 'Dental care, oral health, and smile maintenance'
         },
         {
           name: 'Mental Hygiene Shelf',
@@ -462,10 +462,28 @@ export default function HomePage({ token = '' }: Partial<Props>) {
           description: 'Mental health, mindfulness, and emotional wellbeing'
         },
         {
-          name: 'Oral Hygiene Shelf',
-          slug: 'Oral Hygiene Shelf',
-          image: '/Images/Oral Hygiene Shelf.jpeg',
-          description: 'Dental care, oral health, and smile maintenance'
+          name: 'Holistic Health Hygiene Shelf',
+          slug: 'Holistic Health Hygiene Shelf',
+          image: '/Images/Holistic Health Hygiene Shelf.jpeg',
+          description: 'Comprehensive wellness and hygiene practices for overall health'
+        },
+        {
+          name: 'Kids Hygiene Shelf',
+          slug: 'Kids Hygiene Shelf',
+          image: '/Images/Kids Hygiene Shelf.png',
+          description: 'Child health, pediatric care, and family wellness routines'
+        },
+        {
+          name: 'Home Hygiene Shelf',
+          slug: 'Home Hygiene Shelf',
+          image: '/Images/Home Hygiene Shelf.png',
+          description: 'Household sanitation, cleaning tips, and home environment health'
+        },
+        {
+          name: 'Food Hygiene Shelf',
+          slug: 'Food Hygiene Shelf',
+          image: '/Images/Food Hygiene Shelf.png',
+          description: 'Nutrition, food safety, and healthy eating habits'
         }
       ].map((shelf, index) => (
         <ShelfCard

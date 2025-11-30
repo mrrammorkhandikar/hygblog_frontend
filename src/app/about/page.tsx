@@ -662,8 +662,8 @@ Visit Website
               <div className="space-y-4 text-slate-700">
                 <div className="flex items-center gap-3">
                   <Mail className="text-[#0f766e]" />
-                  <a href="mailto:drsayyedbushra@gmail.com" className="text-slate-700 hover:text-[#0f766e] transition">
-                    drsayyedbushra@gmail.com
+                  <a href="mailto:drbushra@hygieneshelf.in" className="text-slate-700 hover:text-[#0f766e] transition">
+                    drbushra@hygieneshelf.in
                   </a>
                 </div>
                 <div className="flex items-center gap-3">
