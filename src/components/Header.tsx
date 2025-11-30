@@ -81,18 +81,28 @@ export default function Header() {
             >
               Home
             </Link>
-            <Link
-              href="/blogs"
-              className="relative hover:text-teal-700 transition-colors duration-300 after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-[2px] after:bg-teal-600 hover:after:w-full after:transition-all"
-            >
-              Blogs
-            </Link>
+           
             <Link
               href="/about"
               className="relative hover:text-teal-700 transition-colors duration-300 after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-[2px] after:bg-teal-600 hover:after:w-full after:transition-all"
             >
               About
             </Link>
+
+            <Link
+              href="/blogs"
+              className="relative hover:text-teal-700 transition-colors duration-300 after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-[2px] after:bg-teal-600 hover:after:w-full after:transition-all"
+            >
+              Blogs
+            </Link>
+
+            <Link
+              href="/products"
+              className="relative hover:text-teal-700 transition-colors duration-300 after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-[2px] after:bg-teal-600 hover:after:w-full after:transition-all"
+            >
+              Products
+            </Link>
+
             <Link
               href="/contact"
               className="relative hover:text-teal-700 transition-colors duration-300 after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-[2px] after:bg-teal-600 hover:after:w-full after:transition-all"
@@ -130,6 +140,14 @@ export default function Header() {
               onClick={closeMobileMenu}
             >
               Blogs
+            </Link>
+            <Link
+              href="/products"
+              className="text-slate-700 hover:text-teal-700 font-medium py-2 px-3 rounded-lg hover:bg-teal-50 transition-colors"
+              style={{ fontFamily: '"Inter", sans-serif' }}
+              onClick={closeMobileMenu}
+            >
+              Products
             </Link>
             <Link
               href="/about"

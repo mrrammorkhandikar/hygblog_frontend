@@ -290,7 +290,7 @@ export default function AdminCategories() {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              className="w-full px-3 py-2 border text-black placeholder-gray-400 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               placeholder="Search categories..."
             />
           </div>
@@ -301,7 +301,7 @@ export default function AdminCategories() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
-                className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+                className="px-3 py-2 border border-gray-300 rounded-md text-black placeholder-gray-400 text-sm"
               >
                 <option value="name">Name</option>
                 <option value="created_at">Created Date</option>
@@ -321,7 +321,7 @@ export default function AdminCategories() {
               <select
                 value={pageSize}
                 onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
-                className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+                className="px-3 py-2 border text-black placeholder-gray-400 border-gray-300 rounded-md text-sm"
               >
                 <option value={5}>5</option>
                 <option value={10}>10</option>

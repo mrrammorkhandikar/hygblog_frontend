@@ -782,11 +782,11 @@ export default function CreatePost() {
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
-                          <label className="text-sm text-gray-600">Type:</label>
+                          <label className="text-sm text-gray-600 ">Type:</label>
                           <select
                             value={block.metadata?.level || 0}
                             onChange={(e) => updateContentBlock(block.id, { metadata: { ...block.metadata, level: Number(e.target.value) } })}
-                            className="px-2 py-1 border border-gray-300 rounded text-sm text-black"
+                            className="px-2 py-1 border  placeholder-gray-400 border-gray-300 rounded text-sm text-black"
                           >
                             <option value={1}>H1</option>
                             <option value={2}>H2</option>
@@ -896,7 +896,7 @@ export default function CreatePost() {
                             <select
                               value={item.type}
                               onChange={(e) => updateListItem(block.id, item.id, { type: e.target.value as 'text' | 'image' })}
-                              className="px-2 py-1 border border-gray-300 rounded text-sm w-full"
+                              className="px-2 py-1 border border-gray-300 rounded text-black placeholder-gray-400 text-sm w-full"
                             >
                               <option value="text">Text</option>
                               <option value="image">Image</option>

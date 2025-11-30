@@ -80,6 +80,52 @@ const ImageUploadManager: React.FC<ImageUploadManagerProps> = ({
   }
 
   const uploadToSupabase = async (file: File): Promise<string> => {
+    // If uploadEndpoint is specified and we're not doing direct upload,
+    // use the backend API instead of direct Supabase upload
+    if (uploadEndpoint && uploadEndpoint !== '/images') {
+      // Create FormData for multipart upload
+      const formData = new FormData()
+      formData.append('image', file)
+
+      // Add additional data based on endpoint
+      if (uploadEndpoint === '/image-upload/title') {
+        formData.append('blogTitle', 'posts')
+      } else if (uploadEndpoint === '/image-upload/author-profile') {
+        formData.append('authorImage', file.name)
+      } else if (folder) {
+        formData.append('blogTitle', folder)
+      }
+
+      try {
+        const token = localStorage.getItem('adminToken')
+        if (!token) throw new Error('Authentication required for upload')
+
+        const response = await fetch(`/api${uploadEndpoint}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(errorData.error || `Upload failed: ${response.status}`)
+        }
+
+        const result = await response.json()
+        if (result.success && result.url) {
+          return result.url
+        } else {
+          throw new Error('Invalid upload response')
+        }
+      } catch (error) {
+        // Fallback to direct Supabase upload if API fails
+        console.warn('Backend upload failed, falling back to direct upload:', error)
+      }
+    }
+
+    // Fallback: Direct Supabase upload
     // generate filename: optional folder + sanitized name
     const ext = file.name.split('.').pop() || 'png'
     const sanitized = file.name.replace(/[^a-zA-Z0-9.]/g, '_')

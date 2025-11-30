@@ -19,7 +19,8 @@ import {
   X,
   Menu,
   Settings,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Users2
 } from "lucide-react";
 
 const navigation = [
@@ -30,8 +31,9 @@ const navigation = [
 const adminNavigation = [
   { name: 'Categories', href: '/admin/categories', icon: FolderOpen },
   { name: 'Tags', href: '/admin/tags', icon: Tags },
-  { name: 'Authors', href: '/admin/authors', icon: Users }
-  
+  { name: 'Authors', href: '/admin/authors', icon: Users },
+  { name: 'Teams', href: '/admin/teams', icon: Users2 }
+
 ];
 
 export default function AdminLayout({

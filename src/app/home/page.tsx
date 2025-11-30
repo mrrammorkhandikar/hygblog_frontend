@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useActionState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Phone, User } from 'lucide-react';
 import { apiGet } from '@/app/admin/api';
 import { sendContact, type ContactState } from '@/app/contact/actions';
@@ -53,6 +53,13 @@ type Blog = {
   updated_at: string;
 };
 
+type Shelf = {
+  name: string;
+  slug: string;
+  image: string;
+  description: string;
+};
+
 export default function HomePage({ token = '' }: Partial<Props>) {
   const { user } = useUser();
   const [tags, setTags] = useState<Tag[]>([]);
@@ -60,6 +67,7 @@ export default function HomePage({ token = '' }: Partial<Props>) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false); // isMobile state removed as it was not fully necessary for the fix
+  const [expandedShelf, setExpandedShelf] = useState<string | null>(null);
 
   // Contact form state
   const [state, formAction] = useActionState<ContactState, FormData>(sendContact, {
@@ -85,7 +93,7 @@ export default function HomePage({ token = '' }: Partial<Props>) {
   // loadBlogs (latest featured and published blogs)
   const loadBlogs = async () => {
     try {
-      const response = await apiGet<{ data: Blog[] }>('/posts?published=true&featured=true&limit=2&sortBy=date&sortOrder=desc', token);
+      const response = await apiGet<{ data: Blog[] }>('/posts?published=true&featured=true&limit=3&sortBy=date&sortOrder=desc', token);
       setBlogs(Array.isArray(response.data) ? response.data : []);
     } catch (err: any) {
       console.error('Failed to load blogs:', err);
@@ -125,6 +133,91 @@ export default function HomePage({ token = '' }: Partial<Props>) {
     hidden: {},
     visible: { transition: { staggerChildren: 0.12 } },
   };
+
+  function ShelfCard({ shelf, tags, index }: { shelf: Shelf; tags: Tag[]; index: number }) {
+    const [isExpanded, setIsExpanded] = useState(false);
+
+    const handleShelfClick = () => {
+      setIsExpanded(!isExpanded);
+    };
+
+    const handleTagClick = (tag: Tag) => {
+      window.location.href = `/blogs?tag=${tag.slug}`;
+    };
+
+    return (
+      <div className="relative">
+        <motion.div
+          variants={fadeInUp}
+          whileHover={{ translateY: -6, boxShadow: '0 18px 40px rgba(8, 89, 76, 0.08)' }}
+          className="rounded-2xl overflow-hidden bg-white shadow-sm border border-slate-100 cursor-pointer transition"
+          onClick={handleShelfClick}
+        >
+          <img
+            src={shelf.image}
+            alt={shelf.name}
+            className="w-full h-full object-contain rounded-xl"
+            loading={index < 1 ? 'eager' : 'lazy'}
+            width={400}
+            height={400}
+          />
+          <div className="p-6">
+            <h4 className="text-xl font-semibold text-[#115e59] mb-2">{shelf.name}</h4>
+            <p className="text-sm text-slate-600 mb-4">{shelf.description}</p>
+            <div className="text-sm text-[#0f766e] font-medium">
+              {tags.length} topics available
+            </div>
+          </div>
+        </motion.div>
+
+        <AnimatePresence>
+          {isExpanded && (
+            <motion.div
+              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="absolute top-full left-0 right-0 z-50 mt-2 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden"
+              style={{ minHeight: '300px' }}
+            >
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h5 className="text-lg font-semibold text-[#0f766e]">{shelf.name}</h5>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsExpanded(false);
+                    }}
+                    className="text-slate-400 hover:text-slate-600 text-xl"
+                  >
+                    ×
+                  </button>
+                </div>
+                <div className="space-y-2 max-h-60 overflow-y-auto dropdown-scroll">
+                  {tags.map((tag, tagIndex) => (
+                    <motion.div
+                      key={tag.id}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: tagIndex * 0.05 }}
+                      className="cursor-pointer hover:bg-slate-50 rounded p-3 transition-colors border border-slate-100"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleTagClick(tag);
+                      }}
+                    >
+                      <h6 className="text-sm font-medium text-[#115e59]">{tag.name}</h6>
+                      <p className="text-xs text-slate-600 mt-1 line-clamp-2">{tag.description ?? 'Explore related articles and tips.'}</p>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#f7fdff] via-[#eefdfa] to-[#f3fbff] text-slate-800 antialiased scroll-smooth">
@@ -268,7 +361,7 @@ export default function HomePage({ token = '' }: Partial<Props>) {
             {/* Photo */}
             <motion.div variants={fadeInUp} className="flex justify-center md:justify-start">
               <motion.img
-                src="/Images/DrBushraMirza.png"
+                src="/Images/DrBushraMirza.jpeg"
                 alt="Dr. Bushra Mirza"
                 className="w-72 md:w-96 rounded-3xl shadow-2xl border-4 border-[#ecfeff]"
                 animate={{ y: [0, -6, 0] }}
@@ -331,84 +424,49 @@ export default function HomePage({ token = '' }: Partial<Props>) {
     {loading && <p className="text-center text-slate-500">Loading topics…</p>}
     {error && <p className="text-center text-red-500">{error}</p>}
 
-    <motion.div
-      variants={stagger}
-      initial="hidden"
-      whileInView="visible"
-      // FIX 1: Reduced amount to 0.05 to ensure animation triggers quickly on mobile scroll.
-      viewport={{ once: true, amount: 0.05 }} 
-    >
-      {Object.keys(groupedTags).length === 0 && !loading ? (
-        // placeholder topics if none
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-          {[1, 2, 3, 4].map((i) => (
-            <motion.div key={i} variants={fadeInUp} className="rounded-2xl overflow-hidden bg-white shadow-sm border border-slate-100">
-              <img
-                src="https://images.unsplash.com/photo-1580281657521-6c8b56d59b6f?auto=format&fit=crop&w=1280&q=80"
-                alt="Placeholder topic"
-                className="w-full h-32 sm:h-36 md:h-44 object-cover"
-                // FIX 2: Use eager loading for placeholders to ensure immediate visibility.
-                loading="eager" 
-                width={1280}
-                height={1280}
-              />
-              <div className="p-4">
-                <h4 className="text-lg font-semibold text-[#115e59]">Topic {i}</h4>
-                <p className="text-sm text-slate-600 mt-2">Short description of topic to spark interest.</p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      ) : (
-        Object.entries(groupedTags).map(([slug, slugTags]) => (
-          <div key={slug} className="mb-12">
-            <h4 className="text-xl md:text-2xl font-semibold text-[#0f766e] mb-6 capitalize" style={{ fontFamily: '"Playfair Display", serif', textAlign: 'center' }}>
-              {slug.replace(/_/g, ' ')}
-            </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-              {/* Added index to map for conditional eager loading */}
-              {slugTags.map((tag, index) => ( 
-                <motion.article
-                  key={tag.id}
-                  variants={fadeInUp}
-                  whileHover={{ translateY: -6, boxShadow: '0 18px 40px rgba(8, 89, 76, 0.08)' }}
-                  className="rounded-2xl overflow-hidden bg-white shadow-sm border border-slate-100 cursor-pointer transition"
-                  onClick={() => (window.location.href = `/blogs`)}
-                >
-                  <img
-                    src={tag.image_url ?? 'https://images.unsplash.com/photo-1526256262350-7da7584cf5eb?auto=format&fit=crop&w=1280&q=80'}
-                    alt={tag.name}
-                    className="w-full h-32 sm:h-36 md:h-44 object-cover"
-                    // FIX 2: Set first 4 images to eager loading.
-                    loading={index < 4 ? 'eager' : 'lazy'} 
-                    width={1280}
-                    height={1280 * (44 / 1280)}
-                  />
-                  <div className="p-4">
-                    <h5 className="text-lg font-semibold text-[#115e59]">{tag.name}</h5>
-                    <p className="text-sm text-slate-600 mt-2 line-clamp-2">{tag.description ?? 'Explore articles, tips, and guides.'}</p>
-                  </div>
-                </motion.article>
-              ))}
-            </div>
-          </div>
-        ))
-      )}
-    </motion.div>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      {[
+        {
+          name: 'Holistic Health Hygiene Shelf',
+          slug: 'Holistic Health Hygiene Shelf',
+          image: '/Images/Holistic Health Hygiene Shelf.jpeg',
+          description: 'Comprehensive wellness and hygiene practices for overall health'
+        },
+        {
+          name: 'Mental Hygiene Shelf',
+          slug: 'Mental Hygiene Shelf',
+          image: '/Images/Mental Hygiene Shelf.jpeg',
+          description: 'Mental health, mindfulness, and emotional wellbeing'
+        },
+        {
+          name: 'Oral Hygiene Shelf',
+          slug: 'Oral Hygiene Shelf',
+          image: '/Images/Oral Hygiene Shelf.jpeg',
+          description: 'Dental care, oral health, and smile maintenance'
+        }
+      ].map((shelf, index) => (
+        <ShelfCard
+          key={shelf.slug}
+          shelf={shelf}
+          tags={groupedTags[shelf.slug] || []}
+          index={index}
+        />
+      ))}
+    </div>
   </div>
 </section>
 
 
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-20">
-          <div className="flex items-center justify-between mb-8">
+          <div className="text-center mb-8">
             <h3 className="text-2xl md:text-3xl font-bold text-[#0f766e]" style={{ fontFamily: '"Playfair Display", serif' }}>
               Latest from the Blog
             </h3>
-            <p className="text-sm text-slate-600">Featured reads to start with</p>
+            <p className="text-sm text-slate-600 mt-2">Featured reads to start with</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {blogs.length > 0 ? (
               blogs.map((blog, i) => (
                 <motion.article
@@ -441,9 +499,6 @@ export default function HomePage({ token = '' }: Partial<Props>) {
                     <h4 className="text-2xl font-semibold text-[#0f766e] mb-3" style={{ fontFamily: '"Playfair Display", serif' }}>
                       {blog.title}
                     </h4>
-                    <p className="text-slate-600 mb-5">
-                      {blog.excerpt || 'Explore this insightful article on health and wellness.'}
-                    </p>
                     <div className="flex items-center justify-between">
                       <div className="text-sm text-slate-600">Read time: 4 min</div>
                       <div>
@@ -455,7 +510,7 @@ export default function HomePage({ token = '' }: Partial<Props>) {
               ))
             ) : (
               // Fallback placeholder cards if no blogs are loaded
-              [1, 2].map((i) => (
+              [1, 2, 3].map((i) => (
                 <motion.article
                   key={i}
                   initial={{ opacity: 0, y: 20 }}
@@ -642,6 +697,40 @@ export default function HomePage({ token = '' }: Partial<Props>) {
 
         /* Smooth scroll for anchor links */
         html { scroll-behavior: smooth; }
+
+        /* Modern Custom Scrollbar for Dropdown */
+        .dropdown-scroll {
+          scrollbar-width: thin;
+          scrollbar-color: #0f766e #f1f5f9;
+        }
+
+        .dropdown-scroll::-webkit-scrollbar {
+          width: 4px;
+        }
+
+        .dropdown-scroll::-webkit-scrollbar-track {
+          background: transparent;
+        }
+
+        .dropdown-scroll::-webkit-scrollbar-thumb {
+          background: linear-gradient(180deg, #0f766e 0%, #06b6d4 100%);
+          border-radius: 10px;
+          border: none;
+          transition: background 0.2s ease;
+        }
+
+        .dropdown-scroll::-webkit-scrollbar-thumb:hover {
+          background: linear-gradient(180deg, #0d5e59 0%, #0891b2 100%);
+          transform: scaleX(1.2);
+        }
+
+        .dropdown-scroll::-webkit-scrollbar-thumb:active {
+          background: linear-gradient(180deg, #0b4d47 0%, #0e7490 100%);
+        }
+
+        .dropdown-scroll::-webkit-scrollbar-corner {
+          background: transparent;
+        }
       `}</style>
     </div>
   );

@@ -3,78 +3,59 @@ import { useEffect, useState } from 'react';
 import { apiGet, apiPost, apiDelete, apiPut } from '../api';
 import ImageUploadManager from '../../../components/ImageUploadManager';
 
-type Tag = {
+type Team = {
   id: string;
   name: string;
-  slug?: string;
+  title?: string;
   description?: string;
-  image_url?: string;
-  category_id?: string;
-  tag_type: 'regular' | 'cloud' | 'seo';
+  socialmedia: any[];
+  image?: string;
   created_at: string;
   updated_at: string;
 };
 
-type Category = {
-  id: string;
-  name: string;
-};
-
-type TagType = 'regular' | 'cloud' | 'seo';
-
-export default function AdminTags() {
-  const [tags, setTags] = useState<Tag[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [slugOptions, setSlugOptions] = useState<string[]>([]);
+export default function AdminTeams() {
+  const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  
+
   // Form state
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
-    slug: '',
+    title: '',
     description: '',
-    category_id: '',
-    tag_type: 'regular' as TagType
+    socialmedia: [] as any[]
   });
-  
+
   // Image upload
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
-  
+
   // Search and filter
   const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<string>('');
-  const [tagTypeFilter, setTagTypeFilter] = useState<TagType | ''>('');
-  const [sortBy, setSortBy] = useState<'name' | 'slug' | 'created_at' | 'tag_type'>('name');
+  const [sortBy, setSortBy] = useState<'name' | 'title' | 'created_at'>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-  
+
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  
+
   const token = typeof window !== 'undefined' ? localStorage.getItem('adminToken') : null;
 
-  // Load tags, categories, and slug options
+  // Load teams
   const loadData = async () => {
     try {
       setLoading(true);
       setError(null);
-      const [tagsData, categoriesData, slugOptionsData] = await Promise.all([
-        apiGet<Tag[]>('/tags', token),
-        apiGet<Category[]>('/categories', token),
-        apiGet<{slugs: string[]}>('/tags/slug-options', token)
-      ]);
-      setTags(Array.isArray(tagsData) ? tagsData : []);
-      setCategories(Array.isArray(categoriesData) ? categoriesData : []);
-      setSlugOptions(slugOptionsData?.slugs || []);
+      const teamsData = await apiGet<Team[]>('/teams', token);
+      setTeams(Array.isArray(teamsData) ? teamsData : []);
     } catch (err: any) {
-      console.error('Failed to load data:', err);
-      setError('Failed to load tags and categories. Please try again.');
+      console.error('Failed to load teams:', err);
+      setError('Failed to load teams. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -86,28 +67,13 @@ export default function AdminTags() {
     }
   }, [token]);
 
-  // Reset form when tag type changes
-  useEffect(() => {
-    if (formData.tag_type !== 'regular') {
-      setFormData(prev => ({
-        ...prev,
-        slug: '',
-        category_id: ''
-      }));
-      setImageFile(null);
-      setImagePreview(null);
-      setImageUrl(null);
-    }
-  }, [formData.tag_type]);
-
   // Reset form
   const resetForm = () => {
     setFormData({
       name: '',
-      slug: '',
+      title: '',
       description: '',
-      category_id: '',
-      tag_type: 'regular' as TagType
+      socialmedia: []
     });
     setImageFile(null);
     setImagePreview(null);
@@ -116,26 +82,12 @@ export default function AdminTags() {
     setEditingId(null);
   };
 
-  // Validate form based on tag type
+  // Validate form
   const validateForm = () => {
     const errors: string[] = [];
 
     if (!formData.name.trim()) {
-      errors.push('Tag name is required');
-    }
-
-    if (formData.tag_type === 'regular') {
-      if (!formData.slug) {
-        errors.push('Slug is required for regular tags');
-      }
-      if (!slugOptions.includes(formData.slug)) {
-        errors.push('Please select a valid slug from the dropdown');
-      }
-
-      // For regular tags, image is required when creating new tags
-      if (!isEditing && !imageUrl && !imagePreview) {
-        errors.push('Tag image is required for regular tags');
-      }
+      errors.push('Team name is required');
     }
 
     return errors;
@@ -155,92 +107,103 @@ export default function AdminTags() {
     setError(null);
 
     try {
-      const tagData: any = {
+      const teamData: any = {
         name: formData.name.trim(),
+        title: formData.title.trim() || null,
         description: formData.description.trim() || null,
-        tag_type: formData.tag_type
+        socialmedia: formData.socialmedia,
+        image: imageUrl
       };
 
-      // Add type-specific fields
-      if (formData.tag_type === 'regular') {
-        tagData.slug = formData.slug;
-        tagData.category_id = formData.category_id || null;
-        if (imageUrl) {
-          tagData.image_url = imageUrl;
-        }
-      }
-
       if (isEditing && editingId) {
-        await apiPut(`/tags/${editingId}`, token, tagData);
+        await apiPut(`/teams/${editingId}`, token, teamData);
       } else {
-        await apiPost('/tags', token, tagData);
+        await apiPost('/teams', token, teamData);
       }
 
       resetForm();
       await loadData();
     } catch (err: any) {
-      console.error('Failed to save tag:', err);
-      setError(err.message || 'Failed to save tag. Please try again.');
+      console.error('Failed to save team:', err);
+      setError(err.message || 'Failed to save team. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   // Handle edit
-  const handleEdit = (tag: Tag) => {
+  const handleEdit = (team: Team) => {
     setFormData({
-      name: tag.name,
-      slug: tag.slug || '',
-      description: tag.description || '',
-      category_id: tag.category_id || '',
-      tag_type: tag.tag_type
+      name: team.name,
+      title: team.title || '',
+      description: team.description || '',
+      socialmedia: team.socialmedia || []
     });
-    setImageUrl(tag.image_url || null);
-    setImagePreview(tag.image_url || null);
+    setImageUrl(team.image || null);
+    setImagePreview(team.image || null);
     setIsEditing(true);
-    setEditingId(tag.id);
+    setEditingId(team.id);
   };
 
   // Handle delete
   const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete the tag "${name}"? This action cannot be undone.`)) {
+    if (!confirm(`Are you sure you want to delete the team "${name}"? This action cannot be undone.`)) {
       return;
     }
 
     try {
       setLoading(true);
-      await apiDelete(`/tags/${id}`, token);
-      setSuccess('Tag and associated image deleted successfully!');
+      await apiDelete(`/teams/${id}`, token);
+      setSuccess('Team and associated image deleted successfully!');
       await loadData();
     } catch (err: any) {
-      console.error('Failed to delete tag:', err);
-      setError(err.message || 'Failed to delete tag. It may be in use by posts.');
+      console.error('Failed to delete team:', err);
+      setError(err.message || 'Failed to delete team. It may be in use by posts.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Filter and sort tags
-  const filteredTags = tags
-    .filter(tag => {
-      const matchesSearch = tag.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           (tag.slug && tag.slug.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                           (tag.description && tag.description.toLowerCase().includes(searchTerm.toLowerCase()));
-      
-      const matchesCategory = !categoryFilter || tag.category_id === categoryFilter;
-      const matchesTagType = !tagTypeFilter || tag.tag_type === tagTypeFilter;
-      
-      return matchesSearch && matchesCategory && matchesTagType;
+  // Handle social media changes
+  const handleSocialMediaChange = (index: number, field: string, value: string) => {
+    const updatedSocialMedia = [...formData.socialmedia];
+    if (!updatedSocialMedia[index]) {
+      updatedSocialMedia[index] = {};
+    }
+    updatedSocialMedia[index][field] = value;
+    setFormData({ ...formData, socialmedia: updatedSocialMedia });
+  };
+
+  const addSocialMedia = () => {
+    setFormData({
+      ...formData,
+      socialmedia: [...formData.socialmedia, { platform: '', url: '' }]
+    });
+  };
+
+  const removeSocialMedia = (index: number) => {
+    const updatedSocialMedia = formData.socialmedia.filter((_, i) => i !== index);
+    setFormData({ ...formData, socialmedia: updatedSocialMedia });
+  };
+
+  // Filter and sort teams
+  const filteredTeams = teams
+    .filter(team => {
+      const matchesSearch = team.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           (team.title && team.title.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                           (team.description && team.description.toLowerCase().includes(searchTerm.toLowerCase()));
+
+      return matchesSearch;
     })
     .sort((a, b) => {
       let aValue: any = a[sortBy];
       let bValue: any = b[sortBy];
-      
+
       if (sortBy === 'created_at') {
         aValue = new Date(aValue).getTime();
         bValue = new Date(bValue).getTime();
       }
-      
+
       if (sortDirection === 'asc') {
         return aValue > bValue ? 1 : -1;
       } else {
@@ -249,22 +212,22 @@ export default function AdminTags() {
     });
 
   // Pagination
-  const totalPages = Math.ceil(filteredTags.length / pageSize);
+  const totalPages = Math.ceil(filteredTeams.length / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
-  const paginatedTags = filteredTags.slice(startIndex, startIndex + pageSize);
+  const paginatedTeams = filteredTeams.slice(startIndex, startIndex + pageSize);
 
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, categoryFilter, tagTypeFilter, sortBy, sortDirection]);
+  }, [searchTerm, sortBy, sortDirection]);
 
   return (
     <div className="max-w-7xl mx-auto space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Tags</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Teams</h1>
         <div className="text-sm text-gray-500">
-          {filteredTags.length} of {tags.length} tags
+          {filteredTeams.length} of {teams.length} teams
         </div>
       </div>
 
@@ -285,28 +248,10 @@ export default function AdminTags() {
       {/* Add/Edit Form */}
       <div className="bg-white p-6 rounded-lg shadow-sm border">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          {isEditing ? 'Edit Tag' : 'Add New Tag'}
+          {isEditing ? 'Edit Team' : 'Add New Team'}
         </h2>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Tag Type Selector */}
-          <div>
-            <label htmlFor="tag_type" className="block text-sm font-medium text-black mb-2">
-              Type Of Tag *
-            </label>
-            <select
-              id="tag_type"
-              value={formData.tag_type}
-              onChange={(e) => setFormData({ ...formData, tag_type: e.target.value as TagType })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-black"
-              required
-            >
-              <option value="regular">Tags</option>
-              <option value="cloud">Cloud Tags</option>
-              <option value="seo">SEO Tags</option>
-            </select>
-          </div>
 
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-black mb-2">
@@ -316,98 +261,103 @@ export default function AdminTags() {
                 id="name"
                 type="text"
                 value={formData.name}
-                onChange={(e) => {
-                  const name = e.target.value;
-                  setFormData({
-                    ...formData,
-                    name
-                  });
-                }}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-black"
-                placeholder="Tag name..."
+                placeholder="Team name..."
                 required
               />
             </div>
 
-            {/* Slug field - only for regular tags */}
-            {formData.tag_type === 'regular' && (
-              <div>
-                <label htmlFor="slug" className="block text-sm font-medium text-black mb-2">
-                  Slug *
-                </label>
-                <select
-                  id="slug"
-                  value={formData.slug}
-                  onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-black"
-                  required
-                >
-                  <option value="">Select a slug...</option>
-                  {slugOptions.map(slug => (
-                    <option key={slug} value={slug}>
-                      {slug.replace(/_/g, ' ')}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Category field - only for regular tags */}
-            {formData.tag_type === 'regular' && (
-              <div>
-                <label htmlFor="category_id" className="block text-sm font-medium text-black mb-2">
-                  Category
-                </label>
-                <select
-                  id="category_id"
-                  value={formData.category_id}
-                  onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-black"
-                >
-                  <option value="">No category</option>
-                  {categories.map(category => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-black mb-2">
-                Description
+              <label htmlFor="title" className="block text-sm font-medium text-black mb-2">
+                Title
               </label>
               <input
-                id="description"
+                id="title"
                 type="text"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-black"
-                placeholder="Tag description..."
+                placeholder="Team title..."
               />
             </div>
           </div>
 
-          {/* Image Upload - only for regular tags */}
-          {formData.tag_type === 'regular' && (
-            <div>
-              <label className="block text-sm font-medium text-black mb-2">
-                Tag Image *
-              </label>
-              <ImageUploadManager
-                onImageUpload={(file, url) => { setImageFile(file); setImagePreview(url); setImageUrl(url); }}
-                onImageRemove={() => { setImageFile(null); setImagePreview(null); setImageUrl(null); }}
-                maxFileSize={5 * 1024 * 1024}
-                multiple={false}
-                existingImages={imagePreview ? [imagePreview] : []}
-                uploadEndpoint="/image-upload/tag-image"
-                showPreview={true}
-              />
-            </div>
-          )}
+          <div>
+            <label htmlFor="description" className="block text-sm font-medium text-black mb-2">
+              Description
+            </label>
+            <textarea
+              id="description"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-black"
+              placeholder="Team description..."
+              rows={3}
+            />
+          </div>
+
+          {/* Social Media Links */}
+          <div>
+            <label className="block text-sm font-medium text-black mb-2">
+              Social Media Links
+            </label>
+            {formData.socialmedia.map((social, index) => (
+              <div key={index} className="flex items-center space-x-2 mb-2">
+                <select
+                  value={social.platform || ''}
+                  onChange={(e) => handleSocialMediaChange(index, 'platform', e.target.value)}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-black"
+                >
+                  <option value="">Select Platform</option>
+                  <option value="Instagram">Instagram</option>
+                  <option value="LinkedIn">LinkedIn</option>
+                  <option value="Twitter">Twitter</option>
+                  <option value="Facebook">Facebook</option>
+                  <option value="YouTube">YouTube</option>
+                  <option value="Website">Website</option>
+                  
+                </select>
+                <input
+                  type="url"
+                  placeholder="URL"
+                  value={social.url || ''}
+                  onChange={(e) => handleSocialMediaChange(index, 'url', e.target.value)}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-black"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeSocialMedia(index)}
+                  className="px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={addSocialMedia}
+              className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
+            >
+              Add Social Media
+            </button>
+          </div>
+
+          {/* Image Upload */}
+          <div>
+            <label className="block text-sm font-medium text-black mb-2">
+              Team Image
+            </label>
+            <ImageUploadManager
+              onImageUpload={(file, url) => { setImageFile(file); setImagePreview(url); setImageUrl(url); }}
+              onImageRemove={() => { setImageFile(null); setImagePreview(null); setImageUrl(null); }}
+              maxFileSize={5 * 1024 * 1024}
+              multiple={false}
+              existingImages={imagePreview ? [imagePreview] : []}
+              uploadEndpoint="/image-upload/team-image"
+              showPreview={true}
+            />
+          </div>
 
           <div className="flex items-center space-x-4">
             <button
@@ -418,9 +368,9 @@ export default function AdminTags() {
               {loading && (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
               )}
-              <span>{loading ? 'Saving...' : (isEditing ? 'Update Tag' : 'Add Tag')}</span>
+              <span>{loading ? 'Saving...' : (isEditing ? 'Update Team' : 'Add Team')}</span>
             </button>
-            
+
             {isEditing && (
               <button
                 type="button"
@@ -444,41 +394,11 @@ export default function AdminTags() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-black placeholder-gray-400"
-                placeholder="Search tags..."
+                placeholder="Search teams..."
               />
             </div>
-            
-            <div className="flex items-center space-x-2">
-              <label className="text-sm text-gray-600 whitespace-nowrap">Type:</label>
-              <select
-                value={tagTypeFilter}
-                onChange={(e) => setTagTypeFilter(e.target.value as TagType | '')}
-                className="px-3 py-2 border border-gray-300 rounded-md text-sm text-black placeholder-gray-400"
-              >
-                <option value="">All Types</option>
-                <option value="regular">Tags</option>
-                <option value="cloud">Cloud Tags</option>
-                <option value="seo">SEO Tags</option>
-              </select>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <label className="text-sm text-gray-600 whitespace-nowrap">Category:</label>
-              <select
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md text-sm text-black placeholder-gray-400"
-              >
-                <option value="" className='text-black placeholder-gray-400'>All Categories</option>
-                {categories.map(category => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-            </div>
           </div>
-          
+
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <label className="text-sm text-gray-600 whitespace-nowrap">Sort by:</label>
@@ -488,11 +408,11 @@ export default function AdminTags() {
                 className="px-3 py-2 border border-gray-300 rounded-md text-sm text-black placeholder-gray-400"
               >
                 <option value="name">Name</option>
-                <option value="slug">Slug</option>
+                <option value="title">Title</option>
                 <option value="created_at">Created Date</option>
               </select>
             </div>
-            
+
             <button
               onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
               className="p-2 border border-gray-300 rounded-md hover:bg-gray-50"
@@ -504,7 +424,7 @@ export default function AdminTags() {
         </div>
       </div>
 
-      {/* Tags Table */}
+      {/* Teams Table */}
       <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -512,10 +432,9 @@ export default function AdminTags() {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Slug</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Social Media</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
@@ -523,27 +442,27 @@ export default function AdminTags() {
             <tbody className="bg-white divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
                     <div className="flex items-center justify-center space-x-2">
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-teal-600"></div>
-                      <span>Loading tags...</span>
+                      <span>Loading teams...</span>
                     </div>
                   </td>
                 </tr>
-              ) : paginatedTags.length === 0 ? (
+              ) : paginatedTeams.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-4 text-center text-gray-500">
-                    {searchTerm || categoryFilter || tagTypeFilter ? 'No tags found matching your filters.' : 'No tags found. Create your first tag above.'}
+                  <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
+                    {searchTerm ? 'No teams found matching your filters.' : 'No teams found. Create your first team above.'}
                   </td>
                 </tr>
               ) : (
-                paginatedTags.map((tag) => (
-                  <tr key={tag.id} className="hover:bg-gray-50">
+                paginatedTeams.map((team) => (
+                  <tr key={team.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {tag.image_url ? (
+                      {team.image ? (
                         <img
-                          src={tag.image_url}
-                          alt={`${tag.name} image`}
+                          src={team.image}
+                          alt={`${team.name} image`}
                           className="w-10 h-10 object-cover rounded"
                         />
                       ) : (
@@ -553,50 +472,39 @@ export default function AdminTags() {
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{tag.name}</div>
+                      <div className="text-sm font-medium text-gray-900">{team.name}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        tag.tag_type === 'regular' ? 'bg-blue-100 text-blue-800' :
-                        tag.tag_type === 'cloud' ? 'bg-green-100 text-green-800' :
-                        'bg-purple-100 text-purple-800'
-                      }`}>
-                        {tag.tag_type === 'regular' ? 'Tags' :
-                         tag.tag_type === 'cloud' ? 'Cloud Tags' :
-                         'SEO Tags'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500 font-mono">{tag.slug || '—'}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">
-                        {tag.category_id ? 
-                          categories.find(c => c.id === tag.category_id)?.name || 'Unknown' : 
-                          '—'
-                        }
-                      </div>
+                      <div className="text-sm text-gray-500">{team.title || '—'}</div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm text-gray-500 max-w-xs truncate">
-                        {tag.description || '—'}
+                        {team.description || '—'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-500">
+                        {team.socialmedia && team.socialmedia.length > 0
+                          ? `${team.socialmedia.length} link${team.socialmedia.length > 1 ? 's' : ''}`
+                          : '—'
+                        }
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm text-gray-500">
-                        {new Date(tag.created_at).toLocaleDateString()}
+                        {new Date(team.created_at).toLocaleDateString()}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center space-x-3">
                         <button
-                          onClick={() => handleEdit(tag)}
+                          onClick={() => handleEdit(team)}
                           className="text-teal-600 hover:text-teal-900 text-sm font-medium"
                         >
                           Edit
                         </button>
                         <button
-                          onClick={() => handleDelete(tag.id, tag.name)}
+                          onClick={() => handleDelete(team.id, team.name)}
                           className="text-red-600 hover:text-red-900 text-sm font-medium"
                         >
                           Delete
@@ -632,7 +540,7 @@ export default function AdminTags() {
               </select>
               <span className="text-sm text-gray-700">per page</span>
             </div>
-            
+
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
@@ -641,7 +549,7 @@ export default function AdminTags() {
               >
                 Previous
               </button>
-              
+
               <div className="flex items-center space-x-1 text-black placeholder-gray-400">
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                   let pageNum;
@@ -654,7 +562,7 @@ export default function AdminTags() {
                   } else {
                     pageNum = currentPage - 2 + i;
                   }
-                  
+
                   return (
                     <button
                       key={pageNum}
@@ -670,7 +578,7 @@ export default function AdminTags() {
                   );
                 })}
               </div>
-              
+
               <button
                 onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                 disabled={currentPage === totalPages}
@@ -679,7 +587,7 @@ export default function AdminTags() {
                 Next
               </button>
             </div>
-            
+
             <div className="text-sm text-gray-700">
               Page {currentPage} of {totalPages}
             </div>
