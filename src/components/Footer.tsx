@@ -4,9 +4,11 @@ export default function Footer() {
       <div className="mx-auto max-w-7xl px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-slate-600">
         {/* Logo + Title */}
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-teal-600 to-cyan-500 flex items-center justify-center text-white font-bold text-lg shadow-md">
-            H
-          </div>
+          <img
+              src="/Images/thelogohy.jpeg"
+              alt="Dr. Bushra's Dental Care"
+              className="h-12 sm:h-12 w-auto transition-transform duration-300 group-hover:scale-105"
+            />
           <div className="flex flex-col">
             <span
               className="text-base font-semibold text-teal-800"

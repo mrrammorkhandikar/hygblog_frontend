@@ -139,10 +139,10 @@ export default function ContactPage() {
                 Send us an email and we'll get back to you within 24 hours.
               </p>
               <a
-                href="mailto:drbushra@hygineshelf.in"
+                href="mailto:drsayyedbushra@gmail.com"
                 className="text-[#0f766e] font-medium hover:text-[#06b6d4] transition"
               >
-                drbushra@hygineshelf.in
+                drsayyedbushra@gmail.com
               </a>
             </motion.div>
 
@@ -158,10 +158,10 @@ export default function ContactPage() {
                 Speak directly with our health experts for immediate assistance.
               </p>
               <a
-                href="tel:+919876543210"
+                href="tel:+919529045550"
                 className="text-[#0f766e] font-medium hover:text-[#06b6d4] transition"
               >
-                +91 98765 43210
+                +91 952 904 5550
               </a>
             </motion.div>
 

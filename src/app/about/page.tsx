@@ -117,18 +117,20 @@ animate={{ opacity: 1 }}
 transition={{ delay: 0.6, duration: 0.7 }}
 >
 <Button
-onClick={() => (window.location.href = '/blogs')}
-className="bg-[#0f766e] hover:bg-[#0d5e59] text-white rounded-full px-6 py-3 shadow-lg"
->
-Explore Her Insights
-</Button>
+                onClick={() => (window.location.href = '/blogs')}
+                className="bg-[#0f766e] hover:bg-[#0d5e59] text-white inline-flex items-center justify-center rounded-full px-[31px] py-[19px] text-[15px] border border-[#c6f6e6] transition shadow-sm"
+              >
+                Explore Insights
+              </Button>
 
-<a
-href="#contact"
-className="inline-flex items-center justify-center rounded-full px-6 py-3 border border-[#c6f6e6] text-[#0f766e] bg-white/60 hover:bg-white transition shadow-sm"
->
-Get in Touch
-</a>
+              <Button
+                onClick={() =>
+                  document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })
+                }
+                className="inline-flex items-center justify-center rounded-full px-[31px] py-[19px] text-[15px] border border-[#c6f6e6] text-[#0f766e] bg-white/60 hover:bg-white transition shadow-sm"
+              >
+                Get in Touch
+              </Button>
 </motion.div>
 </div>
 </div>
@@ -195,10 +197,17 @@ Her approach focuses on sustainable habits that families can easily incorporate 
 <h4 className="text-[#0f766e] font-semibold">Medical Expertise</h4>
 <p className="text-sm text-slate-600 mt-1">Clinical practice in healthcare</p>
 </div>
+
 <div className="bg-[#eff6ff] border border-[#e6f2ff] p-4 rounded-lg shadow-sm">
 <h4 className="text-[#0f766e] font-semibold">Public Health Focus</h4>
 <p className="text-sm text-slate-600 mt-1">Community education & outreach</p>
 </div>
+
+<div className="bg-[#fef7ff] border border-[#fdf4ff] p-4 rounded-lg shadow-sm">
+<h4 className="text-[#0f766e] font-semibold">Data Management</h4>
+<p className="text-sm text-slate-600 mt-1">Healthcare data analysis & management</p>
+</div>
+
 </div>
 </motion.div>
 </motion.div>
@@ -274,6 +283,8 @@ to everyone, regardless of background or expertise.
 </div>
 </section>
 
+
+
 {/* ---------- Authors Section ---------- */}
 {authors.length > 0 && (
 <section className="py-20 bg-white">
@@ -328,7 +339,7 @@ transition={{ type: "spring", stiffness: 300, damping: 20 }}
 <Card className="overflow-hidden shadow-lg border border-gray-100 group">
 <CardContent className="p-0 relative">
 {/* IMAGE */}
-<div className="w-full h-[600px] overflow-hidden relative">
+<div className="w-full h-[400px] overflow-hidden relative">
 {author.authers_image ? (
 <img
 src={author.authers_image}
@@ -458,7 +469,7 @@ transition={{ type: "spring", stiffness: 300, damping: 20 }}
 <Card className="overflow-hidden shadow-lg border border-gray-100 group">
 <CardContent className="p-0 relative">
 {/* IMAGE */}
-<div className="w-full h-[600px] overflow-hidden relative">
+<div className="w-full h-[400px] overflow-hidden relative">
 {team.image ? (
 <img
 src={team.image}
@@ -535,6 +546,102 @@ className="w-10 h-10 bg-white/20 backdrop-blur-sm border border-white/30 rounded
 )}
 
 
+{/* ---------- Our Projects Section ---------- */}
+<section className="py-20 bg-white">
+<div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-20">
+<motion.div
+initial={{ opacity: 0, y: 30 }}
+whileInView={{ opacity: 1, y: 0 }}
+viewport={{ once: true }}
+className="text-center mb-12"
+>
+<h3 className="text-3xl md:text-4xl font-bold text-[#0f766e] mb-4" style={{ fontFamily: '"Playfair Display", serif' }}>
+Our Projects
+</h3>
+<p className="text-lg text-slate-600 max-w-2xl mx-auto">
+Discover the initiatives and platforms that bring Dr. Bushra's vision to life
+</p>
+</motion.div>
+
+<motion.div
+variants={stagger}
+initial="hidden"
+whileInView="visible"
+viewport={{ once: true, amount: 0.2 }}
+className="grid grid-cols-1 md:grid-cols-3 gap-8"
+>
+<motion.div
+variants={fadeInUp}
+className="bg-gradient-to-br from-[#f0fdfa] to-[#e6fffa] p-8 rounded-2xl shadow-lg border border-slate-100 text-center group hover:shadow-xl transition-all duration-300"
+>
+<div className="w-16 h-16 bg-[#0f766e] rounded-full flex items-center justify-center mx-auto mb-6">
+<Globe className="w-8 h-8 text-white" />
+</div>
+<h4 className="text-xl font-semibold text-[#0f766e] mb-4">Guru Akanksha</h4>
+<p className="text-slate-600 mb-6">
+A dedicated NGO focused on education, healthcare and empowerment initiatives,
+working to create positive change in communities.
+</p>
+<a
+href="https://guruakanksha.org/"
+target="_blank"
+rel="noopener noreferrer"
+className="inline-flex items-center gap-2 bg-[#0f766e] text-white px-6 py-2 rounded-full hover:bg-[#0d5e59] transition-colors"
+>
+<ExternalLink size={16} />
+Visit Website
+</a>
+</motion.div>
+
+<motion.div
+variants={fadeInUp}
+className="bg-gradient-to-br from-[#eff6ff] to-[#e6f2ff] p-8 rounded-2xl shadow-lg border border-slate-100 text-center group hover:shadow-xl transition-all duration-300"
+>
+<div className="w-16 h-16 bg-[#0f766e] rounded-full flex items-center justify-center mx-auto mb-6">
+<Users className="w-8 h-8 text-white" />
+</div>
+<h4 className="text-xl font-semibold text-[#0f766e] mb-4">Dr. Bushra</h4>
+<p className="text-slate-600 mb-6">
+Manages author activities, NGO operations, and various initiatives
+focused on healthcare, education, and community development.
+</p>
+<a
+href="https://drbushra.in/"
+target="_blank"
+rel="noopener noreferrer"
+className="inline-flex items-center gap-2 bg-[#0f766e] text-white px-6 py-2 rounded-full hover:bg-[#0d5e59] transition-colors"
+>
+<ExternalLink size={16} />
+Visit Website
+</a>
+</motion.div>
+
+<motion.div
+variants={fadeInUp}
+className="bg-gradient-to-br from-[#fef7ff] to-[#fdf4ff] p-8 rounded-2xl shadow-lg border border-slate-100 text-center group hover:shadow-xl transition-all duration-300"
+>
+<div className="w-16 h-16 bg-[#0f766e] rounded-full flex items-center justify-center mx-auto mb-6">
+<Heart className="w-8 h-8 text-white" />
+</div>
+<h4 className="text-xl font-semibold text-[#0f766e] mb-4">Hygiene Shelf</h4>
+<p className="text-slate-600 mb-6">
+Your trusted source for health and hygiene information,
+practical wellness tips, and expert guidance from Dr. Bushra.
+</p>
+<a
+href="https://hygieneshelf.in/"
+target="_blank"
+rel="noopener noreferrer"
+className="inline-flex items-center gap-2 bg-[#0f766e] text-white px-6 py-2 rounded-full hover:bg-[#0d5e59] transition-colors"
+>
+<ExternalLink size={16} />
+Visit Website
+</a>
+</motion.div>
+</motion.div>
+</div>
+</section>
+
     {/* ---------- Contact Section ---------- */}
       <section id="contact" className="py-20 bg-gradient-to-b from-[#f0fdfa] to-[#f8fcff] ">
         <div className="max-w-6xl mx-auto px-6 md:px-12 lg:px-20">
@@ -555,13 +662,13 @@ className="w-10 h-10 bg-white/20 backdrop-blur-sm border border-white/30 rounded
               <div className="space-y-4 text-slate-700">
                 <div className="flex items-center gap-3">
                   <Mail className="text-[#0f766e]" />
-                  <a href="mailto:drbushra@hygineshelf.in" className="text-slate-700 hover:text-[#0f766e] transition">
-                    drbushra@hygineshelf.in
+                  <a href="mailto:drsayyedbushra@gmail.com" className="text-slate-700 hover:text-[#0f766e] transition">
+                    drsayyedbushra@gmail.com
                   </a>
                 </div>
                 <div className="flex items-center gap-3">
                   <Phone className="text-[#0f766e]" />
-                  <span>+91 98765 43210</span>
+                  <span>+91 952 904 5550</span>
                 </div>
               </div>
             </motion.div>

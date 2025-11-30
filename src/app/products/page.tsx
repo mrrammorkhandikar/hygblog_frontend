@@ -221,7 +221,7 @@ export default function ProductsPage() {
                       className="flex items-center gap-2 bg-[#0f766e] hover:bg-[#0d5e59] text-white px-6 py-3 rounded-full shadow-lg transform transition-transform hover:-translate-y-0.5"
                     >
                       <ShoppingCart className="w-5 h-5" />
-                      Buy Now - 
+                      Buy Now 
                     </Button>
                   </a>
                 </div>

@@ -265,25 +265,28 @@ export default function HomePage({ token = '' }: Partial<Props>) {
             </motion.p>
 
             <motion.div
-              className="mt-8 flex flex-wrap gap-4"
+              className="mt-4 flex flex-wrap gap-4"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.85, duration: 0.7 }}
             >
               <Button
                 onClick={() => (window.location.href = '/blogs')}
-                className="bg-[#0f766e] hover:bg-[#0d5e59] text-white rounded-full px-6 py-3 shadow-lg"
+                className="bg-[#0f766e] hover:bg-[#0d5e59] text-white inline-flex items-center justify-center rounded-full px-[31px] py-[19px] text-[15px] border border-[#c6f6e6] transition shadow-sm"
               >
                 Explore Blogs
               </Button>
 
-              <a
-                href="#contact"
-                className="inline-flex items-center justify-center rounded-full px-6 py-3 border border-[#c6f6e6] text-[#0f766e] bg-white/60 hover:bg-white transition shadow-sm"
+              <Button
+                onClick={() =>
+                  document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })
+                }
+                className="inline-flex items-center justify-center rounded-full px-[31px] py-[19px] text-[15px] border border-[#c6f6e6] text-[#0f766e] bg-white/60 hover:bg-white transition shadow-sm"
               >
                 Contact Dr. Bushra
-              </a>
+              </Button>
             </motion.div>
+
 
             {/* subtle trust badges / small text */}
             <motion.div
@@ -391,7 +394,8 @@ export default function HomePage({ token = '' }: Partial<Props>) {
                 readers build healthy habits that feel simple, sustainable, and empowering.
               </p>
 
-              <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4 "
+              style={{ display: 'none' }}>
                 <div className="bg-[#f0fdfa] border border-[#e6fffa] p-4 rounded-lg shadow-sm">
                   <h4 className="text-[#0f766e] font-semibold">Experience</h4>
                   <p className="text-sm text-slate-600 mt-1">Clinical practice & public health outreach</p>
@@ -400,6 +404,25 @@ export default function HomePage({ token = '' }: Partial<Props>) {
                   <h4 className="text-[#0f766e] font-semibold">Approach</h4>
                   <p className="text-sm text-slate-600 mt-1">Practical, human-centered, evidence-backed</p>
                 </div>
+              </div>
+
+
+              <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="bg-[#f0fdfa] border border-[#e6fffa] p-4 rounded-lg shadow-sm">
+                  <h4 className="text-[#0f766e] font-semibold">Medical Expertise</h4>
+                  <p className="text-sm text-slate-600 mt-1">Clinical practice in healthcare</p>
+                  </div>
+
+                  <div className="bg-[#eff6ff] border border-[#e6f2ff] p-4 rounded-lg shadow-sm">
+                  <h4 className="text-[#0f766e] font-semibold">Public Health Focus</h4>
+                  <p className="text-sm text-slate-600 mt-1">Community education & outreach</p>
+                  </div>
+
+                  <div className="bg-[#fef7ff] border border-[#fdf4ff] p-4 rounded-lg shadow-sm">
+                  <h4 className="text-[#0f766e] font-semibold">Data Management</h4>
+                  <p className="text-sm text-slate-600 mt-1">Healthcare data analysis & management</p>
+                  </div>
+
               </div>
 
               <div className="mt-6">
@@ -572,11 +595,11 @@ export default function HomePage({ token = '' }: Partial<Props>) {
               <div className="space-y-4 text-slate-700">
                 <div className="flex items-center gap-3">
                   <Mail className="text-[#0f766e]" />
-                  <a href="mailto:drbushra@hygineshelf.in" className="text-slate-700">drbushra@hygineshelf.in</a>
+                  <a href="mailto:drsayyedbushra@gmail.com" className="text-slate-700">drsayyedbushra@gmail.com</a>
                 </div>
                 <div className="flex items-center gap-3">
                   <Phone className="text-[#0f766e]" />
-                  <span>+91 98765 43210</span>
+                  <span>+91 952 904 5550</span>
                 </div>
 
               </div>

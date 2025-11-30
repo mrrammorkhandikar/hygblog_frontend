@@ -49,9 +49,9 @@ export default function Header() {
             onClick={closeMobileMenu}
           >
             <img
-              src="/Images/TheToothLogo2.png"
+              src="/Images/thelogohy.jpeg"
               alt="Dr. Bushra's Dental Care"
-              className="h-8 sm:h-9 w-auto transition-transform duration-300 group-hover:scale-105"
+              className="h-12 sm:h-12 w-auto transition-transform duration-300 group-hover:scale-105"
             />
             <span
               className="text-base sm:text-lg font-semibold tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-teal-700 to-cyan-600"

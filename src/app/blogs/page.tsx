@@ -114,23 +114,20 @@ export default function BlogsPage() {
               transition={{ delay: 0.6, duration: 0.7 }}
             >
               <Button
-                onClick={() => {
-                  const element = document.getElementById('blogs');
-                  if (element) {
-                    window.scrollTo({ top: element.offsetTop - 100, behavior: 'smooth' });
-                  }
-                }}
-                className="bg-[#0f766e] hover:bg-[#0d5e59] text-white rounded-full px-6 py-3 shadow-lg"
-              >
-                Browse Articles
-              </Button>
-
-              <a
-                href="/about"
-                className="inline-flex items-center justify-center rounded-full px-6 py-3 border border-[#c6f6e6] text-[#0f766e] bg-white/60 hover:bg-white transition shadow-sm"
-              >
-                About Dr. Bushra
-              </a>
+                              onClick={() => (window.location.href = '/blogs')}
+                              className="bg-[#0f766e] hover:bg-[#0d5e59] text-white inline-flex items-center justify-center rounded-full px-[31px] py-[19px] text-[15px] border border-[#c6f6e6] transition shadow-sm"
+                            >
+                              Browse Articles
+                            </Button>
+              
+                            <Button
+                              onClick={() =>
+                                document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })
+                              }
+                              className="inline-flex items-center justify-center rounded-full px-[31px] py-[19px] text-[15px] border border-[#c6f6e6] text-[#0f766e] bg-white/60 hover:bg-white transition shadow-sm"
+                            >
+                              About Dr. Bushra
+                            </Button>
             </motion.div>
           </div>
         </div>
