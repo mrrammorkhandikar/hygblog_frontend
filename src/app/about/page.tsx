@@ -32,6 +32,13 @@ export default function AboutPage() {
 const [authors, setAuthors] = useState<Author[]>([]);
 const [teams, setTeams] = useState<Team[]>([]);
 const [loading, setLoading] = useState(true);
+const [clickedAuthor, setClickedAuthor] = useState<string | null>(null);
+const [clickedTeam, setClickedTeam] = useState<string | null>(null);
+const [clickedProject, setClickedProject] = useState<string | null>(null);
+const [hoveredAuthor, setHoveredAuthor] = useState<string | null>(null);
+const [hoveredTeam, setHoveredTeam] = useState<string | null>(null);
+const [hoveredProject, setHoveredProject] = useState<string | null>(null);
+const [isTouchDevice, setIsTouchDevice] = useState(false);
 
 // Fetch authors and teams data
 useEffect(() => {
@@ -59,6 +66,11 @@ setLoading(false);
 };
 
 fetchData();
+}, []);
+
+// Detect touch device
+useEffect(() => {
+setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
 }, []);
 
 // Framer motion variants
@@ -336,7 +348,15 @@ variants={fadeInUp}
 whileHover={{ y: -6 }}
 transition={{ type: "spring", stiffness: 300, damping: 20 }}
 >
-<Card className="overflow-hidden shadow-lg border border-gray-100 group">
+<Card
+className="overflow-hidden shadow-lg border border-gray-100 cursor-pointer"
+onMouseEnter={() => !isTouchDevice && setHoveredAuthor(author.id)}
+onMouseLeave={() => !isTouchDevice && setHoveredAuthor(null)}
+onClick={() => {
+setClickedAuthor(author.id);
+setTimeout(() => setClickedAuthor(null), 4000);
+}}
+>
 <CardContent className="p-0 relative">
 {/* IMAGE */}
 <div className="w-full h-[400px] overflow-hidden relative">
@@ -344,20 +364,20 @@ transition={{ type: "spring", stiffness: 300, damping: 20 }}
 <img
 src={author.authers_image}
 alt={author.username}
-className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110"
+className={`w-full h-full object-cover transition-all duration-700 ${(clickedAuthor === author.id || hoveredAuthor === author.id) ? 'scale-110' : ''}`}
 />
 ) : (
-<div className="w-full h-full bg-gradient-to-br from-[#06b6d4] to-[#0f766e] flex items-center justify-center text-white text-4xl font-bold">
+<div className={`w-full h-full bg-gradient-to-br from-[#06b6d4] to-[#0f766e] flex items-center justify-center text-white text-4xl font-bold transition-all duration-700 ${(clickedAuthor === author.id || hoveredAuthor === author.id) ? 'scale-110' : ''}`}>
 {author.username.charAt(0).toUpperCase()}
 </div>
 )}
 
 {/* OVERLAY */}
-<div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+<div className={`absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent transition-opacity duration-500 ${(clickedAuthor === author.id || hoveredAuthor === author.id) ? 'opacity-100' : 'opacity-0'}`}></div>
 </div>
 
 {/* DETAILS - Positioned at bottom of image */}
-<div className="absolute bottom-0 left-0 right-0 p-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+<div className={`absolute bottom-0 left-0 right-0 p-6 text-white transition-opacity duration-500 ${(clickedAuthor === author.id || hoveredAuthor === author.id) ? 'opacity-100' : 'opacity-0'}`}>
 <div className="flex justify-between items-start">
 {/* Left side - Name, Title, Description */}
 <div className="flex-1">
@@ -466,7 +486,15 @@ variants={fadeInUp}
 whileHover={{ y: -6 }}
 transition={{ type: "spring", stiffness: 300, damping: 20 }}
 >
-<Card className="overflow-hidden shadow-lg border border-gray-100 group">
+<Card
+className="overflow-hidden shadow-lg border border-gray-100 cursor-pointer"
+onMouseEnter={() => !isTouchDevice && setHoveredTeam(team.id)}
+onMouseLeave={() => !isTouchDevice && setHoveredTeam(null)}
+onClick={() => {
+setClickedTeam(team.id);
+setTimeout(() => setClickedTeam(null), 4000);
+}}
+>
 <CardContent className="p-0 relative">
 {/* IMAGE */}
 <div className="w-full h-[400px] overflow-hidden relative">
@@ -474,20 +502,20 @@ transition={{ type: "spring", stiffness: 300, damping: 20 }}
 <img
 src={team.image}
 alt={team.name}
-className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110"
+className={`w-full h-full object-cover transition-all duration-700 ${(clickedTeam === team.id || hoveredTeam === team.id) ? 'scale-110' : ''}`}
 />
 ) : (
-<div className="w-full h-full bg-gradient-to-br from-[#06b6d4] to-[#0f766e] flex items-center justify-center text-white text-4xl font-bold">
+<div className={`w-full h-full bg-gradient-to-br from-[#06b6d4] to-[#0f766e] flex items-center justify-center text-white text-4xl font-bold transition-all duration-700 ${(clickedTeam === team.id || hoveredTeam === team.id) ? 'scale-110' : ''}`}>
 {team.name.charAt(0).toUpperCase()}
 </div>
 )}
 
 {/* OVERLAY */}
-<div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+<div className={`absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent transition-opacity duration-500 ${(clickedTeam === team.id || hoveredTeam === team.id) ? 'opacity-100' : 'opacity-0'}`}></div>
 </div>
 
 {/* DETAILS - Positioned at bottom of image */}
-<div className="absolute bottom-0 left-0 right-0 p-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+<div className={`absolute bottom-0 left-0 right-0 p-6 text-white transition-opacity duration-500 ${(clickedTeam === team.id || hoveredTeam === team.id) ? 'opacity-100' : 'opacity-0'}`}>
 <div className="flex justify-between items-start">
 {/* Left side - Name, Title, Description */}
 <div className="flex-1">
