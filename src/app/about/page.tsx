@@ -626,12 +626,12 @@ variants={fadeInUp}
 className="bg-gradient-to-br from-[#eff6ff] to-[#e6f2ff] p-8 rounded-2xl shadow-lg border border-slate-100 text-center group hover:shadow-xl transition-all duration-300"
 >
 <div className="w-16 h-16 bg-[#0f766e] rounded-full flex items-center justify-center mx-auto mb-6">
-<Users className="w-8 h-8 text-white" />
+<img src="/Images/tooth_white.png" alt="Tooth Logo" className="w-8 h-8 object-contain" />
 </div>
-<h4 className="text-xl font-semibold text-[#0f766e] mb-4">Dr. Bushra</h4>
+<h4 className="text-xl font-semibold text-[#0f766e] mb-4">Dental Clinic</h4>
 <p className="text-slate-600 mb-6">
-Manages author activities, NGO operations, and various initiatives
-focused on healthcare, education, and community development.
+Providing high-quality dental care at affordable prices,
+ensuring healthy smiles and optimal oral health for everyone.
 </p>
 <a
 href="https://drbushra.in/"
