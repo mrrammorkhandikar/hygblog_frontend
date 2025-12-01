@@ -32,7 +32,8 @@ const adminNavigation = [
   { name: 'Categories', href: '/admin/categories', icon: FolderOpen },
   { name: 'Tags', href: '/admin/tags', icon: Tags },
   { name: 'Authors', href: '/admin/authors', icon: Users },
-  { name: 'Teams', href: '/admin/teams', icon: Users2 }
+  { name: 'Teams', href: '/admin/teams', icon: Users2 },
+  { name: 'Contact Messages', href: '/admin/contact-messages', icon: Settings }
 
 ];
 
