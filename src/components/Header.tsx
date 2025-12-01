@@ -66,6 +66,7 @@ export default function Header() {
             onClick={toggleMobileMenu}
             className="md:hidden p-2 rounded-lg hover:bg-teal-50 text-slate-700 hover:text-teal-700 transition-colors"
             aria-label="Toggle mobile menu"
+            suppressHydrationWarning
           >
             {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>

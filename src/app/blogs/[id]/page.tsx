@@ -184,7 +184,7 @@ export default function BlogDetail({ params }: { params: Promise<{ id: string }>
               <img
                 src={blockContent}
                 alt={metadata?.alt || ''}
-                className={`rounded-lg ${metadata?.size === 'small' ? 'max-w-sm' : metadata?.size === 'large' ? 'w-full' : 'max-w-2xl'} mx-auto`}
+                className={`rounded-lg ${metadata?.size === 'small' ? 'max-w-sm' : metadata?.size === 'large' || metadata?.size === 'medium' ? 'w-full' : 'max-w-2xl'} mx-auto`}
                 style={{
                   width: metadata?.size === 'custom' ? metadata.width : undefined,
                   height: metadata?.size === 'custom' ? metadata.height : undefined,
@@ -269,7 +269,7 @@ export default function BlogDetail({ params }: { params: Promise<{ id: string }>
               >
                 {blog.title}
               </h1>
-              <div className="flex items-center justify-center gap-6 text-sm text-white/80">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-6 text-sm text-white/80">
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4" />
                   <span>{new Date(blog.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
@@ -330,7 +330,7 @@ export default function BlogDetail({ params }: { params: Promise<{ id: string }>
                 animate="visible"
                 className="mb-12"
               >
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-[#f0fdfa] rounded-full flex items-center justify-center">
                       <span className="text-[#0f766e] font-semibold text-lg">
@@ -342,7 +342,7 @@ export default function BlogDetail({ params }: { params: Promise<{ id: string }>
                       <p className="text-sm text-slate-500">Health & Hygiene Expert</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 self-start sm:self-center">
                     <Button size="sm" variant="outline" className="rounded-full">
                       <Share2 className="w-4 h-4" />
                     </Button>
