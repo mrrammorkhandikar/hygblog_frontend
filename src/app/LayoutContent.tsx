@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import FloatingSocialMedia from "@/components/FloatingSocialMedia";
 
 export default function LayoutContent({
   children,
@@ -11,6 +12,14 @@ export default function LayoutContent({
 }) {
   const pathname = usePathname();
   const isAdminPage = pathname?.startsWith('/admin');
+
+  // Show floating social media on specific pages
+  const showFloatingSocial = pathname === '/' ||
+                            pathname === '/home' ||
+                            pathname?.startsWith('/about') ||
+                            pathname?.startsWith('/contact') ||
+                            pathname?.startsWith('/products') ||
+                            pathname?.startsWith('/blogs');
 
   if (isAdminPage) {
     // For admin pages, only show content without header/footer
@@ -32,6 +41,9 @@ export default function LayoutContent({
         </main>
         <Footer />
       </div>
+
+      {/* Floating Social Media Widget - only on specific pages */}
+      {showFloatingSocial && <FloatingSocialMedia />}
     </body>
   );
 }

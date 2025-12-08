@@ -54,6 +54,25 @@ type ListItem = {
   nestedList?: { type: 'ul' | 'ol'; items: ListItem[] };
 };
 
+// Parse text formatting for display
+function parseFormattedText(text: string): string {
+  if (!text) return '';
+
+  // Convert markdown-style formatting to HTML
+  let formatted = text;
+
+  // Bold: **text** -> <strong>text</strong>
+  formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+  // Italic: *text* -> <em>text</em>
+  formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+  // Underline: <u>text</u> -> <u>text</u> (already HTML)
+  // Note: This is already HTML so it will be rendered
+
+  return formatted;
+}
+
 export default function BlogDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = React.use(params);
   const [blog, setBlog] = useState<Blog | null>(null);
@@ -136,47 +155,40 @@ export default function BlogDetail({ params }: { params: Promise<{ id: string }>
             if (metadata?.italic) contentClass += " italic";
             if (metadata?.underline) contentClass += " underline";
 
+            const formattedContent = parseFormattedText(blockContent || 'Empty paragraph');
+
             if (level === 0) {
               return renderContentElement(
-                <p key={block.id} className={`mb-6 leading-relaxed text-gray-800 text-base${contentClass}`}>
-                  {blockContent}
-                </p>
+                <p key={block.id} className={`mb-6 leading-relaxed text-gray-800 text-base${contentClass}`} dangerouslySetInnerHTML={{ __html: formattedContent }} />
               );
             } else {
               // H1, H2, H3 as titles with different sizes
               const baseClass = `font-bold text-[#0f766e]${contentClass}`;
+              const formattedHeading = parseFormattedText(blockContent || 'Empty heading');
+
               if (level === 1) {
                 return renderContentElement(
-                  <h1 key={block.id} className={`${baseClass} text-4xl md:text-5xl mt-12 mb-6 leading-tight`} style={{ fontFamily: '"Playfair Display", serif' }}>
-                    {blockContent}
-                  </h1>
+                  <h1 key={block.id} className={`${baseClass} text-4xl md:text-5xl mt-12 mb-6 leading-tight`} style={{ fontFamily: '"Playfair Display", serif' }} dangerouslySetInnerHTML={{ __html: formattedHeading }} />
                 );
               } else if (level === 2) {
                 return renderContentElement(
-                  <h2 key={block.id} className={`${baseClass} text-3xl md:text-4xl mt-10 mb-5 leading-tight`} style={{ fontFamily: '"Playfair Display", serif' }}>
-                    {blockContent}
-                  </h2>
+                  <h2 key={block.id} className={`${baseClass} text-3xl md:text-4xl mt-10 mb-5 leading-tight`} style={{ fontFamily: '"Playfair Display", serif' }} dangerouslySetInnerHTML={{ __html: formattedHeading }} />
                 );
               } else if (level === 3) {
                 return renderContentElement(
-                  <h3 key={block.id} className={`${baseClass} text-2xl md:text-3xl mt-8 mb-4 leading-tight`} style={{ fontFamily: '"Playfair Display", serif' }}>
-                    {blockContent}
-                  </h3>
+                  <h3 key={block.id} className={`${baseClass} text-2xl md:text-3xl mt-8 mb-4 leading-tight`} style={{ fontFamily: '"Playfair Display", serif' }} dangerouslySetInnerHTML={{ __html: formattedHeading }} />
                 );
               }
               // Fallback for other levels (though admin only allows 0-3 now)
               return renderContentElement(
-                <p key={block.id} className={`mb-6 leading-relaxed text-gray-800 text-base${contentClass}`}>
-                  {blockContent}
-                </p>
+                <p key={block.id} className={`mb-6 leading-relaxed text-gray-800 text-base${contentClass}`} dangerouslySetInnerHTML={{ __html: formattedContent }} />
               );
             }
 
           case 'blockquote':
+            const formattedQuote = parseFormattedText(blockContent || 'Empty quote');
             return renderContentElement(
-              <blockquote key={block.id} className="mb-8 pl-6 border-l-4 border-[#0f766e] italic text-gray-700 text-lg">
-                {blockContent}
-              </blockquote>
+              <blockquote key={block.id} className="mb-8 pl-6 border-l-4 border-[#0f766e] italic text-gray-700 text-lg" dangerouslySetInnerHTML={{ __html: formattedQuote }} />
             );
 
           case 'image':
@@ -211,7 +223,9 @@ export default function BlogDetail({ params }: { params: Promise<{ id: string }>
               <ListTag key={block.id} className="mb-8 pl-6 list-disc">
                 {listItems?.map((item) => (
                   <li key={item.id} className="mb-2">
-                    {item.type === 'text' ? item.content : (
+                    {item.type === 'text' ? (
+                      <span dangerouslySetInnerHTML={{ __html: parseFormattedText(item.content || 'Empty item') }} />
+                    ) : (
                       <img
                         src={item.content}
                         alt={item.imageMetadata?.alt || ''}

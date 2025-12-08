@@ -85,25 +85,17 @@ type ContentBlock = {
   affiliateLink?: { type: 'affiliate' | 'custom' | null; id?: string; name?: string; url?: string };
 };
 
-// Format selected text in textarea
-function formatSelectedText(textarea: HTMLTextAreaElement, startTag: string, endTag: string) {
-  const start = textarea.selectionStart;
-  const end = textarea.selectionEnd;
-  const selectedText = textarea.value.substring(start, end);
+// Format selected text in textarea for React controlled components
+function formatSelectedText(content: string, start: number, end: number, startTag: string, endTag: string): string {
+  const selectedText = content.substring(start, end);
 
   if (selectedText) {
-    const newText = startTag + selectedText + endTag;
-    const beforeText = textarea.value.substring(0, start);
-    const afterText = textarea.value.substring(end);
-
-    textarea.value = beforeText + newText + afterText;
-    textarea.selectionStart = start + startTag.length;
-    textarea.selectionEnd = end + startTag.length;
-
-    // Trigger change event
-    const event = new Event('input', { bubbles: true });
-    textarea.dispatchEvent(event);
+    const beforeText = content.substring(0, start);
+    const afterText = content.substring(end);
+    return beforeText + startTag + selectedText + endTag + afterText;
   }
+
+  return content;
 }
 
 // Parse text formatting for preview
@@ -798,15 +790,54 @@ export default function CreatePost() {
                       <div className="flex items-center space-x-1 mb-2 bg-gray-50 p-2 rounded">
                         <button type="button" onClick={() => {
                           const textarea = document.getElementById(`text-block-${block.id}`) as HTMLTextAreaElement;
-                          if (textarea) formatSelectedText(textarea, '**', '**');
+                          if (textarea) {
+                            const start = textarea.selectionStart;
+                            const end = textarea.selectionEnd;
+                            const selectedText = block.content.substring(start, end);
+                            if (selectedText) {
+                              const newContent = formatSelectedText(block.content, start, end, '**', '**');
+                              updateContentBlock(block.id, { content: newContent });
+                              setTimeout(() => {
+                                textarea.focus();
+                                textarea.selectionStart = start + 2;
+                                textarea.selectionEnd = end + 2;
+                              }, 0);
+                            }
+                          }
                         }} className="px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold" title="Bold">B</button>
                         <button type="button" onClick={() => {
                           const textarea = document.getElementById(`text-block-${block.id}`) as HTMLTextAreaElement;
-                          if (textarea) formatSelectedText(textarea, '*', '*');
+                          if (textarea) {
+                            const start = textarea.selectionStart;
+                            const end = textarea.selectionEnd;
+                            const selectedText = block.content.substring(start, end);
+                            if (selectedText) {
+                              const newContent = formatSelectedText(block.content, start, end, '*', '*');
+                              updateContentBlock(block.id, { content: newContent });
+                              setTimeout(() => {
+                                textarea.focus();
+                                textarea.selectionStart = start + 1;
+                                textarea.selectionEnd = end + 1;
+                              }, 0);
+                            }
+                          }
                         }} className="px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded text-xs italic" title="Italic">I</button>
                         <button type="button" onClick={() => {
                           const textarea = document.getElementById(`text-block-${block.id}`) as HTMLTextAreaElement;
-                          if (textarea) formatSelectedText(textarea, '<u>', '</u>');
+                          if (textarea) {
+                            const start = textarea.selectionStart;
+                            const end = textarea.selectionEnd;
+                            const selectedText = block.content.substring(start, end);
+                            if (selectedText) {
+                              const newContent = formatSelectedText(block.content, start, end, '<u>', '</u>');
+                              updateContentBlock(block.id, { content: newContent });
+                              setTimeout(() => {
+                                textarea.focus();
+                                textarea.selectionStart = start + 3;
+                                textarea.selectionEnd = end + 3;
+                              }, 0);
+                            }
+                          }
                         }} className="px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded text-xs underline" title="Underline">U</button>
                       </div>
                       <textarea

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useActionState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Phone, User } from 'lucide-react';
+import { Mail, Phone, User, Facebook, Instagram } from 'lucide-react';
 import { apiGet } from '@/app/admin/api';
 import { sendContact, type ContactState } from '@/app/contact/actions';
 import { Button } from '@/components/ui/button';
@@ -84,7 +84,8 @@ export default function HomePage({ token = '' }: Partial<Props>) {
       setTags(Array.isArray(data) ? data : []);
     } catch (err: any) {
       console.error('Failed to load tags:', err);
-      setError('Failed to load tags. Please try again.');
+      // Don't show error for tags - let the page work without them
+      setTags([]);
     } finally {
       setLoading(false);
     }
@@ -97,7 +98,8 @@ export default function HomePage({ token = '' }: Partial<Props>) {
       setBlogs(Array.isArray(response.data) ? response.data : []);
     } catch (err: any) {
       console.error('Failed to load blogs:', err);
-      // Don't set error for blogs, just log it
+      // Don't show error for blogs, just log it and show fallback
+      setBlogs([]);
     }
   };
 
@@ -288,6 +290,7 @@ export default function HomePage({ token = '' }: Partial<Props>) {
             </motion.div>
 
 
+
             {/* subtle trust badges / small text */}
             <motion.div
               className="mt-6 flex flex-wrap items-center gap-6 text-sm text-slate-600"
@@ -364,34 +367,27 @@ export default function HomePage({ token = '' }: Partial<Props>) {
             {/* Photo */}
             <motion.div variants={fadeInUp} className="flex justify-center md:justify-start">
               <motion.img
-                src="/Images/DrBushraMirza.jpeg"
-                alt="Dr. Bushra Mirza"
-                className="w-72 md:w-96 rounded-3xl shadow-2xl border-4 border-[#ecfeff]"
-                animate={{ y: [0, -6, 0] }}
-                transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-                loading="lazy"
-                width={384} // Added width/height for CLS
-                height={384}
+              src="/Images/DrBushraMirza.jpeg"
+              alt="Dr. Bushra Mirza"
+              className="w-80 md:w-[32rem] rounded-3xl shadow-2xl border-4 border-[#ecfeff]"
+              animate={{ y: [0, -6, 0] }}
+              transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
               />
             </motion.div>
 
             {/* Expanded About text */}
             <motion.div variants={fadeInUp} className="prose prose-slate max-w-none">
               <h2 style={{ fontFamily: '"Playfair Display", serif' }} className="text-3xl md:text-4xl text-[#0f766e] font-bold">
-                Meet Dr. Bushra Mirza — physician, educator, and hygiene advocate
+                Meet Dr. Bushra Mirza — Dentist, educator, and hygiene advocate
               </h2>
 
-              <p className="text-lg text-slate-700 mt-3">
-                Dr. Bushra Mirza combines clinical experience with a passion for public health
-                education. Her work focuses on practical hygiene, infection prevention, and
-                everyday wellness strategies that families can adopt with ease.
-              </p>
+              <blockquote className="text-lg text-slate-700 mt-3 italic border-l-4 border-[#0f766e] pl-4">
+                "For me, hygiene is not just a habit, it's an act of self-respect. Hygiene Shelf is my way of helping every person choose themselves every day."
+                <br />— Dr. Bushra Mirza, Founder
+              </blockquote>
 
               <p className="text-slate-700 mt-4">
-                On HygineShelf she translates evidence-based medicine into friendly,
-                actionable advice — covering topics like hand hygiene, household sanitation,
-                child health, nutrition basics, and mental wellbeing. Her goal is to help
-                readers build healthy habits that feel simple, sustainable, and empowering.
+                Hygiene Shelf was born from a simple yet powerful realization during my early journey in healthcare — that prevention is often neglected, misunderstood, and inaccessible to many. As a dentist and public health professional, I repeatedly witnessed how lack of basic hygiene awareness silently fuels disease, discomfort, and financial burden for families. <br /> <br /> From classrooms to clinics, from rural camps to urban practices, one truth became clear: people don't always lack resources, they often lack the right information at the right time. That gap between knowledge and action became my inspiration. Hygiene Shelf emerged as a digital space dedicated to simplifying hygiene, skincare, oral care, and wellness — turning expert knowledge into everyday habits for real people.
               </p>
 
               <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4 "

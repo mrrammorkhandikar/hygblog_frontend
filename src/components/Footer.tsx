@@ -1,3 +1,5 @@
+import { Facebook, Instagram } from 'lucide-react';
+
 export default function Footer() {
   return (
     <footer className="relative w-full bg-gradient-to-b from-white to-[#f8fcff] border-t border-teal-50">
@@ -32,10 +34,31 @@ export default function Footer() {
           <a href="/contact" className="hover:text-teal-700 transition-colors">Contact</a>
         </nav>
 
-        {/* Copyright */}
-        <p className="text-slate-500 text-center md:text-right text-sm">
-          © {new Date().getFullYear()} Hygiene Shelf · All rights reserved
-        </p>
+        {/* Social Links */}
+        <div className="flex items-center gap-4">
+          <a
+            href="https://www.facebook.com/hygiene.shelf?mibextid=wwXIfr"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-slate-600 hover:text-blue-600 transition-colors"
+            aria-label="Follow us on Facebook"
+          >
+            <Facebook size={20} />
+          </a>
+          <a
+            href="https://www.instagram.com/hygiene.shelf?igsh=MTF5NGx5dDZyd3Zzaw%3D%3D"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-slate-600 hover:text-pink-600 transition-colors"
+            aria-label="Follow us on Instagram"
+          >
+            <Instagram size={20} />
+          </a>
+          {/* Copyright */}
+          <p className="text-slate-500 text-center md:text-right text-sm ml-4">
+            © {new Date().getFullYear()} Hygiene Shelf · All rights reserved
+          </p>
+        </div>
       </div>
 
       {/* Subtle glow line */}

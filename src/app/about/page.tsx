@@ -117,7 +117,7 @@ transition={{ delay: 0.3, duration: 1 }}
 className="mt-6 text-lg text-slate-700 max-w-3xl mx-auto leading-relaxed"
 style={{ fontFamily: `"Inter", sans-serif` }}
 >
-A dedicated physician and hygiene advocate committed to empowering families with
+A dedicated Dentist and hygiene advocate committed to empowering families with
 practical, evidence-based health guidance. Through HygineShelf, Dr. Bushra shares
 her expertise to help build healthier, happier lives.
 </motion.p>
@@ -144,6 +144,8 @@ transition={{ delay: 0.6, duration: 0.7 }}
                 Get in Touch
               </Button>
 </motion.div>
+
+
 </div>
 </div>
 
@@ -180,7 +182,7 @@ className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center"
 <motion.img
 src="/Images/DrBushraMirza.jpeg"
 alt="Dr. Bushra Mirza"
-className="w-72 md:w-96 rounded-3xl shadow-2xl border-4 border-[#ecfeff]"
+className="w-80 md:w-[32rem] rounded-3xl shadow-2xl border-4 border-[#ecfeff]"
 animate={{ y: [0, -6, 0] }}
 transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
 />
@@ -189,19 +191,16 @@ transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
 {/* About text */}
 <motion.div variants={fadeInUp} className="prose prose-slate max-w-none">
 <h2 style={{ fontFamily: '"Playfair Display", serif' }} className="text-3xl md:text-4xl text-[#0f766e] font-bold mb-6">
-Physician, Educator, and Hygiene Advocate
+Dentist, Educator, and Hygiene Advocate
 </h2>
 
-<p className="text-lg text-slate-700 mt-3">
-Dr. Bushra Mirza brings together years of clinical experience with a passion for
-public health education. Her medical background, combined with her dedication to
-community wellness, drives her mission to make health information accessible and actionable.
-</p>
+<blockquote className="text-lg text-slate-700 mt-3 italic border-l-4 border-[#0f766e] pl-4">
+"For me, hygiene is not just a habit, it's an act of self-respect. Hygiene Shelf is my way of helping every person choose themselves every day."
+<br />— Dr. Bushra Mirza, Founder
+</blockquote>
 
 <p className="text-slate-700 mt-4">
-Through HygineShelf, she bridges the gap between medical expertise and everyday life,
-offering practical advice on hygiene, infection prevention, nutrition, and mental wellbeing.
-Her approach focuses on sustainable habits that families can easily incorporate into their routines.
+Hygiene Shelf was born from a simple yet powerful realization during my early journey in healthcare — that prevention is often neglected, misunderstood, and inaccessible to many. As a dentist and public health professional, I repeatedly witnessed how lack of basic hygiene awareness silently fuels disease, discomfort, and financial burden for families. <br /> <br /> From classrooms to clinics, from rural camps to urban practices, one truth became clear: people don't always lack resources, they often lack the right information at the right time. That gap between knowledge and action became my inspiration. Hygiene Shelf emerged as a digital space dedicated to simplifying hygiene, skincare, oral care, and wellness — turning expert knowledge into everyday habits for real people.
 </p>
 
 <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">

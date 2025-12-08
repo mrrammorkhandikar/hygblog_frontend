@@ -2,7 +2,7 @@
 
 import React, { useActionState } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, Phone, MapPin, Clock, MessageSquare } from 'lucide-react';
+import { Mail, Phone, MapPin, Clock, MessageSquare, Facebook, Instagram } from 'lucide-react';
 import { sendContact, type ContactState } from './actions';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/contexts/UserContext';
@@ -82,6 +82,8 @@ export default function ContactPage() {
                 Contact Details
               </a>
             </motion.div>
+
+
           </div>
         </div>
 
