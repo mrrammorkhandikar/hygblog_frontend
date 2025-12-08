@@ -20,7 +20,8 @@ import {
   Menu,
   Settings,
   Image as ImageIcon,
-  Users2
+  Users2,
+  Package
 } from "lucide-react";
 
 const navigation = [
@@ -33,6 +34,7 @@ const adminNavigation = [
   { name: 'Tags', href: '/admin/tags', icon: Tags },
   { name: 'Authors', href: '/admin/authors', icon: Users },
   { name: 'Teams', href: '/admin/teams', icon: Users2 },
+  { name: 'Products', href: '/admin/products', icon: Package },
   { name: 'Contact Messages', href: '/admin/contact-messages', icon: Settings }
 
 ];
