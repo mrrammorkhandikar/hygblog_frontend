@@ -7,7 +7,7 @@ export function decodeJWT(token: string) {
     const payload = token.split('.')[1];
     const decoded = JSON.parse(atob(payload));
     return decoded;
-  } catch (e) {
+  } catch {
     return null;
   }
 }
@@ -106,7 +106,7 @@ async function request<T>(path: string, token?: string | null, method: FetchMeth
         const errorData = JSON.parse(responseText); // Attempt to parse as JSON
         errorMessage = errorData.message || errorData.error || errorMessage;
         errorDetails = errorData.details || errorData;
-      } catch (e) {
+      } catch {
         // If JSON parsing fails, use the raw text
         errorMessage = responseText || errorMessage;
       }
@@ -224,7 +224,7 @@ export async function uploadFile(file: File, endpoint: string, token?: string | 
         responseText = await res.text(); // Read body once as text
         const errorData = JSON.parse(responseText); // Attempt to parse as JSON
         errorMessage = errorData.message || errorMessage;
-      } catch (e) {
+      } catch {
         // If JSON parsing fails, use the raw text
         errorMessage = responseText || errorMessage;
       }

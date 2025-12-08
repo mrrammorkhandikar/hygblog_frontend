@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { apiGet, apiPost, apiDelete, apiPut } from '../api';
 import ImageUploadManager from '../../../components/ImageUploadManager';
 
@@ -41,7 +41,6 @@ export default function AdminAuthors() {
   });
 
   // Image upload
-  const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
@@ -58,7 +57,7 @@ export default function AdminAuthors() {
   const token = typeof window !== 'undefined' ? localStorage.getItem('adminToken') : null;
 
   // Load authors
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -70,13 +69,13 @@ export default function AdminAuthors() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     if (token) {
       loadData();
     }
-  }, [token]);
+  }, [token, loadData]);
 
   // Reset form
   const resetForm = () => {
@@ -92,7 +91,6 @@ export default function AdminAuthors() {
       title: '',
       socialmedia: []
     });
-    setImageFile(null);
     setImagePreview(null);
     setImageUrl(null);
     setIsEditing(false);
@@ -472,8 +470,8 @@ export default function AdminAuthors() {
               Profile Image
             </label>
             <ImageUploadManager
-              onImageUpload={(file, url) => { setImageFile(file); setImagePreview(url); setImageUrl(url); }}
-              onImageRemove={() => { setImageFile(null); setImagePreview(null); setImageUrl(null); }}
+              onImageUpload={(_, url) => { setImagePreview(url); setImageUrl(url); }}
+              onImageRemove={() => { setImagePreview(null); setImageUrl(null); }}
               maxFileSize={5 * 1024 * 1024}
               multiple={false}
               existingImages={imagePreview ? [imagePreview] : []}

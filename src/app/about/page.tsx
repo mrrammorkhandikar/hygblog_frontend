@@ -1,11 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Phone, MapPin, Award, Heart, Users, Twitter, Linkedin, Facebook, Instagram, Youtube, Globe, ExternalLink, X } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Mail, Phone, Award, Heart, Users, Twitter, Linkedin, Facebook, Instagram, Youtube, Globe, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface Author {
@@ -34,10 +33,8 @@ const [teams, setTeams] = useState<Team[]>([]);
 const [loading, setLoading] = useState(true);
 const [clickedAuthor, setClickedAuthor] = useState<string | null>(null);
 const [clickedTeam, setClickedTeam] = useState<string | null>(null);
-const [clickedProject, setClickedProject] = useState<string | null>(null);
 const [hoveredAuthor, setHoveredAuthor] = useState<string | null>(null);
 const [hoveredTeam, setHoveredTeam] = useState<string | null>(null);
-const [hoveredProject, setHoveredProject] = useState<string | null>(null);
 const [isTouchDevice, setIsTouchDevice] = useState(false);
 
 // Fetch authors and teams data
@@ -340,7 +337,7 @@ Array.from({ length: 3 }).map((_, index) => (
 </Card>
 ))
 ) : (
-authors.map((author, index) => (
+authors.map((author) => (
 <motion.div
 key={author.id}
 variants={fadeInUp}
@@ -478,7 +475,7 @@ Array.from({ length: 3 }).map((_, index) => (
 </Card>
 ))
 ) : (
-teams.map((team, index) => (
+teams.map((team) => (
 <motion.div
 key={team.id}
 variants={fadeInUp}
