@@ -309,7 +309,7 @@ export default function ProductsPage() {
     <>
       <div className="min-h-screen bg-gradient-to-b from-[#f8ffff] via-[#f0fdfa] to-[#f6fbff] text-slate-900 antialiased">
         {/* Hero */}
-        <section className="min-h-screen flex items-center relative overflow-hidden">
+        <section className="min-h-[80vh] md:min-h-screen flex items-center relative overflow-hidden">
           {/* subtle animated blobs */}
           <div className="absolute inset-0 pointer-events-none mix-blend-multiply opacity-20">
             <motion.div
@@ -387,7 +387,7 @@ export default function ProductsPage() {
                           <motion.div
                             whileHover={{ scale: 1.04, rotateY: 6 }}
                             transition={{ duration: 0.35 }}
-                            className="w-80 h-96 md:w-[22rem] md:h-[30rem] rounded-3xl overflow-hidden shadow-2xl"
+                            className="w-64 h-80 sm:w-72 sm:h-88 md:w-[22rem] md:h-[30rem] rounded-3xl overflow-hidden shadow-2xl"
                             style={{
                               background: 'linear-gradient(160deg,#ffffff, #f6feff)',
                               boxShadow: '0 30px 60px -20px rgba(6, 95, 86, 0.12)'
@@ -417,8 +417,8 @@ export default function ProductsPage() {
                           </motion.div>
 
                           {/* small thumbnail strip - mobile visible under mockup */}
-                          <div className="mt-4 hidden md:flex gap-2 justify-start">
-                            {productBook.images.slice(0, 4).map((src, i) => (
+                          <div className="mt-4 flex gap-2 justify-center overflow-x-auto pb-2">
+                            {productBook.images.slice(0, 6).map((src, i) => (
                               <button
                                 aria-label={`Thumbnail ${i + 1}`}
                                 key={i}
@@ -428,7 +428,7 @@ export default function ProductsPage() {
                                     [product.id]: i
                                   }));
                                 }}
-                                className={`w-16 h-20 rounded-lg overflow-hidden shadow-sm transform transition-all duration-200 ${
+                                className={`flex-shrink-0 w-12 h-16 sm:w-14 sm:h-18 md:w-16 md:h-20 rounded-lg overflow-hidden shadow-sm transform transition-all duration-200 ${
                                   i === currentImageIndex ? 'ring-2 ring-[#0f766e] scale-105' : 'opacity-80 hover:scale-105'
                                 }`}
                               >
@@ -479,7 +479,7 @@ export default function ProductsPage() {
                           ))}
                         </motion.div>
 
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start pt-4">
+                        <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start pt-4 w-full max-w-sm mx-auto lg:max-w-none lg:mx-0">
                           <Button
                             onClick={() => {
                               console.log('Preview clicked for product:', product);
@@ -491,9 +491,9 @@ export default function ProductsPage() {
                               }));
                               setPreviewModalOpen(true);
                             }}
-                            className="flex items-center gap-2 bg-[#0f766e] hover:bg-[#0d5e59] text-white px-6 py-3 rounded-full shadow-lg transform transition-transform hover:-translate-y-0.5"
+                            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#0f766e] hover:bg-[#0d5e59] text-white px-6 py-4 sm:py-3 rounded-full shadow-lg transform transition-transform hover:-translate-y-0.5 min-h-[48px] sm:min-h-0 text-base sm:text-sm font-medium sm:font-normal"
                           >
-                            <BookOpen className="w-5 h-5" />
+                            <BookOpen className="w-5 h-5 flex-shrink-0" />
                             Preview Pages
                           </Button>
 
@@ -502,12 +502,12 @@ export default function ProductsPage() {
                             target="_blank"
                             rel="noopener noreferrer"
                             aria-label="Buy this book"
-                            className="inline-flex"
+                            className="w-full sm:w-auto inline-flex"
                           >
                             <Button
-                              className="flex items-center gap-2 bg-[#0f766e] hover:bg-[#0d5e59] text-white px-6 py-3 rounded-full shadow-lg transform transition-transform hover:-translate-y-0.5"
+                              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#0f766e] hover:bg-[#0d5e59] text-white px-6 py-4 sm:py-3 rounded-full shadow-lg transform transition-transform hover:-translate-y-0.5 min-h-[48px] sm:min-h-0 text-base sm:text-sm font-medium sm:font-normal"
                             >
-                              <ShoppingCart className="w-5 h-5" />
+                              <ShoppingCart className="w-5 h-5 flex-shrink-0" />
                               Buy Now
                             </Button>
                           </a>
@@ -611,7 +611,7 @@ export default function ProductsPage() {
             onClick={() => setPreviewModalOpen(false)}
           >
             <motion.div
-              className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden"
+              className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden mx-4 sm:mx-auto"
               initial={{ scale: 0.92, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.98, opacity: 0 }}
@@ -627,16 +627,7 @@ export default function ProductsPage() {
                   <p className="text-sm text-slate-500">Tap thumbnails or use ← → keys to navigate. Press Esc to close.</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Button
-                    variant="ghost"
-                    onClick={() => {
-                      setPdfModalOpen(true);
-                    }}
-                    className="px-4 py-2"
-                  >
-                    <BookOpen className="w-4 h-4 mr-2" />
-                    Open PDF
-                  </Button>
+                 
                   <button
                     onClick={() => setPreviewModalOpen(false)}
                     className="p-2 rounded-full hover:bg-gray-50 transition-colors"
@@ -712,8 +703,8 @@ export default function ProductsPage() {
               </div>
 
               {/* footer */}
-              <div className="p-6 bg-white border-t border-gray-100 flex items-center justify-between">
-                <div className="text-sm text-slate-600">Want the full PDF? Open it or click Buy to purchase the physical book.</div>
+              <div className="p-6 bg-white border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="text-sm text-slate-600 text-center sm:text-left">Want the full PDF? Open it or click Buy to purchase the physical book.</div>
                 <div className="flex items-center gap-3">
                   <a href={book.buyLink} target="_blank" rel="noopener noreferrer">
                     <Button className="bg-[#0f766e] hover:bg-[#0d5e59] text-white px-4 py-2">
@@ -740,7 +731,7 @@ export default function ProductsPage() {
             onClick={() => setPdfModalOpen(false)}
           >
             <motion.div
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden"
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden mx-4 sm:mx-auto"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 20, opacity: 0 }}
@@ -762,11 +753,21 @@ export default function ProductsPage() {
 
               <div className="w-full h-[75vh] bg-gray-50">
                 {/* embed PDF; uses the same path as book.previewPdf. Make sure the file is in public/Books/... */}
-                <iframe
-                  title="Book PDF preview"
-                  src={book.previewPdf}
-                  className="w-full h-full border-0"
-                />
+                {book.previewPdf ? (
+                  <iframe
+                    title="Book PDF preview"
+                    src={book.previewPdf}
+                    className="w-full h-full border-0"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <div className="text-center space-y-4">
+                      <BookOpen className="w-16 h-16 text-slate-400 mx-auto" />
+                      <p className="text-slate-500">PDF preview not available</p>
+                      <p className="text-sm text-slate-400">Please check back later or contact support</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </motion.div>
           </motion.div>
