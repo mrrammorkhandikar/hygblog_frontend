@@ -115,7 +115,7 @@ className="mt-6 text-lg text-slate-700 max-w-3xl mx-auto leading-relaxed"
 style={{ fontFamily: `"Inter", sans-serif` }}
 >
 A dedicated Dentist and hygiene advocate committed to empowering families with
-practical, evidence-based health guidance. Through HygineShelf, Dr. Bushra shares
+practical, evidence-based health guidance. Through HygieneShelf, Dr. Bushra shares
 her expertise to help build healthier, happier lives.
 </motion.p>
 
@@ -177,7 +177,7 @@ className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center"
 {/* Photo */}
 <motion.div variants={fadeInUp} className="flex justify-center md:justify-start">
 <motion.img
-src="/Images/DrBushraMirza.jpeg"
+src="/Images/dr-bushra-hr-2.jpeg"
 alt="Dr. Bushra Mirza"
 className="w-80 md:w-[32rem] rounded-3xl shadow-2xl border-4 border-[#ecfeff]"
 animate={{ y: [0, -6, 0] }}
@@ -235,7 +235,7 @@ className="text-center mb-12"
 Core Values
 </h3>
 <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-The principles that guide Dr. Bushra's work and the foundation of HygineShelf
+The principles that guide Dr. Bushra's work and the foundation of HygieneShelf
 </p>
 </motion.div>
 
@@ -307,7 +307,7 @@ className="text-center mb-12"
 Our Authors
 </h3>
 <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-Meet the expert contributors who share their knowledge and insights on HygineShelf
+Meet the expert contributors who share their knowledge and insights on HygieneShelf
 </p>
 </motion.div>
 

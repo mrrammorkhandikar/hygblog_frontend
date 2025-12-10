@@ -60,7 +60,7 @@ export default function ContactPage() {
               style={{ fontFamily: `"Inter", sans-serif` }}
             >
               Have questions about health topics, need personalized guidance, or want to collaborate?
-              Dr. Bushra Mirza and the HygineShelf team are here to help you on your wellness journey.
+              Dr. Bushra Mirza and the HygieneShelf team are here to help you on your wellness journey.
             </motion.p>
 
             <motion.div

@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { useUser } from '@/contexts/UserContext';
 
 /**
- * Premium Home Page for HygineShelf.in
+ * Premium Home Page for HygieneShelf.in
  * - Uses Framer Motion for animations
  * - Tailwind for styling (ensure tailwind is configured)
  * - Loads tags with tag_type=regular from /tags endpoint using apiGet
@@ -260,7 +260,7 @@ export default function HomePage({ token = '' }: Partial<Props>) {
               className="mt-6 text-lg text-slate-700 max-w-xl leading-relaxed"
               style={{ fontFamily: `"Inter", sans-serif` }}
             >
-              HygineShelf is a compassionate space for hygiene awareness, practical
+              HygieneShelf is a compassionate space for hygiene awareness, practical
               wellness tips, and evidence-based health guidance from{' '}
               <strong className="text-[#0f766e]">Dr. Bushra Mirza</strong>. Learn how
               small, everyday habits can build resilient, healthy lives — in body and mind.
@@ -367,9 +367,9 @@ export default function HomePage({ token = '' }: Partial<Props>) {
             {/* Photo */}
             <motion.div variants={fadeInUp} className="flex justify-center md:justify-start">
               <motion.img
-              src="/Images/DrBushraMirza.jpeg"
+              src="/Images/dr-bushra-hr-1.jpeg"
               alt="Dr. Bushra Mirza"
-              className="w-80 md:w-[32rem] rounded-3xl shadow-2xl border-4 border-[#ecfeff]"
+              className="w-80 md:w-[28rem] rounded-3xl shadow-2xl border-4 border-[#ecfeff]"
               animate={{ y: [0, -6, 0] }}
               transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
               />
@@ -387,7 +387,8 @@ export default function HomePage({ token = '' }: Partial<Props>) {
               </blockquote>
 
               <p className="text-slate-700 mt-4">
-                Hygiene Shelf was born from a simple yet powerful realization during my early journey in healthcare — that prevention is often neglected, misunderstood, and inaccessible to many. As a dentist and public health professional, I repeatedly witnessed how lack of basic hygiene awareness silently fuels disease, discomfort, and financial burden for families. <br /> <br /> From classrooms to clinics, from rural camps to urban practices, one truth became clear: people don't always lack resources, they often lack the right information at the right time. That gap between knowledge and action became my inspiration. Hygiene Shelf emerged as a digital space dedicated to simplifying hygiene, skincare, oral care, and wellness — turning expert knowledge into everyday habits for real people.
+                Hygiene Shelf was born from a simple yet powerful realization during my early journey in healthcare — that prevention is often neglected, misunderstood, and inaccessible to many. As a dentist and public health professional, I repeatedly witnessed how lack of basic hygiene awareness silently fuels disease, discomfort, and financial burden for families. 
+                {/*<br /> <br /> From classrooms to clinics, from rural camps to urban practices, one truth became clear: people don't always lack resources, they often lack the right information at the right time. That gap between knowledge and action became my inspiration. Hygiene Shelf emerged as a digital space dedicated to simplifying hygiene, skincare, oral care, and wellness — turning expert knowledge into everyday habits for real people. */}
               </p>
 
               <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4 "
@@ -403,7 +404,8 @@ export default function HomePage({ token = '' }: Partial<Props>) {
               </div>
 
 
-              <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4"
+              style={{ display: 'none' }}>
                   <div className="bg-[#f0fdfa] border border-[#e6fffa] p-4 rounded-lg shadow-sm">
                   <h4 className="text-[#0f766e] font-semibold">Medical Expertise</h4>
                   <p className="text-sm text-slate-600 mt-1">Clinical practice in healthcare</p>
