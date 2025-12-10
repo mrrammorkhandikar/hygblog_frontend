@@ -19,10 +19,10 @@ const bodyFont = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Dr. Bushra's Dental Care",
-  description: "Dr. Bushra's Dental Care",
+  title: "Hygiene Shelf",
+  description: "Hygiene Shelf",
   icons: {
-    icon: '/Images/General/TheToothLogo2.png',
+    icon: '/Images/thelogohytitle.png',
   },
 };
 
