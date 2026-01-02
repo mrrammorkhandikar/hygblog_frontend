@@ -31,6 +31,11 @@ export default function BlogsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [visibleBlogs, setVisibleBlogs] = useState(6);
+  const [showScrollButton, setShowScrollButton] = useState(false);
+  const [filteredBlogs, setFilteredBlogs] = useState<Blog[]>([]);
+  const [showLoadMore, setShowLoadMore] = useState(true);
 
   // Load blogs from API
   const loadBlogs = async (category?: string) => {
@@ -58,6 +63,49 @@ export default function BlogsPage() {
     setSelectedCategory(categoryParam);
     loadBlogs(categoryParam || undefined);
   }, []);
+
+  // Filter blogs based on search term
+  useEffect(() => {
+    if (searchTerm.trim() === '') {
+      setFilteredBlogs(blogs);
+      setVisibleBlogs(6);
+    } else {
+      const filtered = blogs.filter(blog =>
+        blog.title.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredBlogs(filtered);
+      setVisibleBlogs(Math.min(6, filtered.length));
+    }
+  }, [searchTerm, blogs]);
+
+  // Check if we need to show scroll button
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY + window.innerHeight;
+      const pageHeight = document.documentElement.scrollHeight;
+      setShowScrollButton(scrollPosition < pageHeight - 100);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Load more blogs function
+  const loadMoreBlogs = () => {
+    const newVisibleCount = visibleBlogs + 6;
+    if (newVisibleCount >= filteredBlogs.length) {
+      setShowLoadMore(false);
+    }
+    setVisibleBlogs(newVisibleCount);
+  };
+
+  // Scroll to bottom function
+  const scrollToBottom = () => {
+    window.scrollTo({
+      top: document.documentElement.scrollHeight,
+      behavior: 'smooth'
+    });
+  };
 
   // Framer motion variants
   const fadeInUp = {
@@ -167,9 +215,46 @@ export default function BlogsPage() {
             </p>
           </motion.div>
 
+          {/* Search Bar */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-8"
+          >
+            <div className="max-w-md ml-0">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search blogs by title..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full px-6 py-3 rounded-full border border-slate-200 focus:border-[#0f766e] focus:ring-2 focus:ring-[#06b6d4] focus:outline-none shadow-sm transition"
+                  style={{ fontFamily: '"Inter", sans-serif' }}
+                />
+                <svg className="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+            </div>
+          </motion.div>
+
           <div className="flex flex-col lg:flex-row gap-8">
-            {/* Main Content */}
-            <div className="flex-1">
+            {/* Sidebar - will appear first on mobile */}
+            <div className="w-full lg:w-80 flex-shrink-0 lg:order-2">
+              <CategoriesBox
+                onCategoryClick={(categoryName) => {
+                  setSelectedCategory(categoryName);
+                  loadBlogs(categoryName);
+                  // Update URL without page reload
+                  const newUrl = categoryName ? `/blogs?category=${encodeURIComponent(categoryName)}` : '/blogs';
+                  window.history.pushState({}, '', newUrl);
+                }}
+              />
+            </div>
+
+            {/* Main Content - will appear second on mobile */}
+            <div className="flex-1 lg:order-1">
               {loading && (
                 <div className="text-center py-12">
                   <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#0f766e]"></div>
@@ -194,8 +279,8 @@ export default function BlogsPage() {
                   viewport={{ once: true, amount: 0.2 }}
                   className="grid grid-cols-1 md:grid-cols-2 gap-8"
                 >
-                  {blogs.length > 0 ? (
-                    blogs.map((blog, i) => (
+                  {filteredBlogs.length > 0 ? (
+                    filteredBlogs.slice(0, visibleBlogs).map((blog, i) => (
                       <motion.article
                         key={blog.id}
                         variants={fadeInUp}
@@ -283,33 +368,46 @@ export default function BlogsPage() {
                 </motion.div>
               )}
 
-              {!loading && !error && blogs.length > 6 && (
+              {!loading && !error && visibleBlogs < filteredBlogs.length && showLoadMore && (
                 <motion.div
                   initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   className="flex justify-center mt-12"
                 >
-                  <Button className="bg-gradient-to-r from-[#0f766e] to-[#06b6d4] text-white px-8 py-3 rounded-full shadow-lg hover:shadow-xl transition">
+                  <Button
+                    onClick={loadMoreBlogs}
+                    className="bg-gradient-to-r from-[#0f766e] to-[#06b6d4] text-white px-8 py-3 rounded-full shadow-lg hover:shadow-xl transition"
+                  >
                     Load More Articles
                   </Button>
                 </motion.div>
               )}
             </div>
 
-            {/* Sidebar */}
-            <div className="w-full lg:w-80 flex-shrink-0">
-              <CategoriesBox
-                onCategoryClick={(categoryName) => {
-                  setSelectedCategory(categoryName);
-                  loadBlogs(categoryName);
-                  // Update URL without page reload
-                  const newUrl = categoryName ? `/blogs?category=${encodeURIComponent(categoryName)}` : '/blogs';
-                  window.history.pushState({}, '', newUrl);
-                }}
-              />
-              <GoogleAdsBox />
-            </div>
+            {/* Floating Down Arrow Button */}
+            {showScrollButton && filteredBlogs.length > visibleBlogs && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="fixed bottom-8 right-8 z-50"
+              >
+                <Button
+                  onClick={scrollToBottom}
+                  className="bg-[#0f766e] hover:bg-[#0d5e59] text-white w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition flex items-center justify-center"
+                  aria-label="Scroll to load more articles"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                  </svg>
+                </Button>
+              </motion.div>
+            )}
+          </div>
+
+          {/* Ads Section - appears only on mobile at the bottom */}
+          <div className="lg:hidden mt-12">
+            <GoogleAdsBox />
           </div>
         </div>
       </section>

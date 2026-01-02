@@ -226,6 +226,16 @@ export default function ContactPage() {
                     <p className="text-sm text-slate-600">Each inquiry receives individual attention</p>
                   </div>
                 </div>
+                              <div className="mt-6">
+                                <Button
+                                  onClick={() => (window.location.href = '/newsletter')}
+                                  className="inline-flex items-center justify-center rounded-full px-6 py-3 bg-gradient-to-r from-[#0f766e] to-[#06b6d4] text-white hover:from-[#0d5e59] hover:to-[#0891b2] transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl md:justify-start"
+                                >
+                                  <Mail className="w-4 h-4 mr-2" />
+                                  Subscribe Our Newsletter
+                                </Button>
+                              </div>
+                
               </div>
             </motion.div>
 
@@ -323,6 +333,8 @@ export default function ContactPage() {
                     Send Message
                   </Button>
                 </div>
+
+                
 
                 {state.message && (
                   <motion.div

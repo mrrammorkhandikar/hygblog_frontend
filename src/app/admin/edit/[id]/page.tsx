@@ -1157,32 +1157,31 @@ const getContextFromForm = (): LLMSuggestionContext & { content?: string } => {
               </div>
               <div className="p-6">
                 {/* Preview Hero */}
-                <div className="relative h-64 bg-gradient-to-b from-[#f7fdff] to-[#eefdfa] flex items-center justify-center rounded-lg overflow-hidden mb-6">
-                  {titleImagePreview ? (
-                    <img src={titleImagePreview} alt={title} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="text-gray-400 text-center">
-                      <div className="text-6xl mb-2">🖼️</div>
-                      <p>No title image</p>
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-black bg-opacity-40"></div>
-                  <div className="relative z-10 text-center text-white p-6">
-                    {selectedCategoryId && (
-                      <div className="mb-4">
-                        <span className="bg-[#0f766e] text-white px-4 py-2 rounded-full text-sm font-medium">
-                          {categories.find(c => c.id === selectedCategoryId)?.name || 'Category'}
-                        </span>
+                <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
+                  <div className="flex items-start gap-6">
+                    {titleImagePreview ? (
+                      <div className="flex-shrink-0">
+                        <img src={titleImagePreview} alt={title} className="w-32 h-32 object-cover rounded-lg border" />
+                      </div>
+                    ) : (
+                      <div className="flex-shrink-0">
+                        <div className="w-32 h-32 bg-gray-100 border rounded-lg flex items-center justify-center">
+                          <span className="text-gray-400">🖼️</span>
+                        </div>
                       </div>
                     )}
-                    <h1 className="text-3xl md:text-4xl font-extrabold mb-4" style={{ fontFamily: `"Playfair Display", serif` }}>
-                      {title || 'Untitled Post'}
-                    </h1>
-                    {excerpt && (
-                      <p className="text-lg text-white/90 max-w-2xl mx-auto">
-                        {excerpt}
-                      </p>
-                    )}
+                    <div className="flex-1">
+                      {selectedCategoryId && (
+                        <div className="mb-3">
+                          <span className="bg-[#0f766e] text-white px-3 py-1 rounded-full text-sm font-medium">
+                            {categories.find(c => c.id === selectedCategoryId)?.name || 'Category'}
+                          </span>
+                        </div>
+                      )}
+                      <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-2" style={{ fontFamily: `"Playfair Display", serif` }}>
+                        {title || 'Untitled Post'}
+                      </h1>
+                    </div>
                   </div>
                 </div>
 
@@ -1286,20 +1285,31 @@ const getContextFromForm = (): LLMSuggestionContext & { content?: string } => {
 
                         case 'ul':
                         case 'ol':
+                          const renderListItem = (item: ListItem): React.ReactNode => {
+                            const content = item.type === 'text' ? (item.content || 'Empty item') : (
+                              item.content ? (
+                                <img src={item.content} alt={item.imageMetadata?.alt || ''} className="rounded max-w-sm" />
+                              ) : (
+                                <div className="text-gray-400">Image item</div>
+                              )
+                            );
+
+                            return (
+                              <li key={item.id} className="mb-2">
+                                {content}
+                                {item.nestedList && item.nestedList.items.length > 0 && (
+                                  <ul className="ml-6 mt-2 list-disc">
+                                    {item.nestedList.items.map(nestedItem => renderListItem(nestedItem))}
+                                  </ul>
+                                )}
+                              </li>
+                            );
+                          };
+
                           const ListTag = type;
                           return (
-                            <ListTag key={block.id} className="mb-8 pl-6 list-disc">
-                              {(listItems || []).map((item) => (
-                                <li key={item.id} className="mb-2">
-                                  {item.type === 'text' ? (item.content || 'Empty item') : (
-                                    item.content ? (
-                                      <img src={item.content} alt={item.imageMetadata?.alt || ''} className="rounded max-w-sm" />
-                                    ) : (
-                                      <div className="text-gray-400">Image item</div>
-                                    )
-                                  )}
-                                </li>
-                              ))}
+                            <ListTag key={block.id} className="mb-8 pl-6 list-disc text-black">
+                              {(listItems || []).map((item) => renderListItem(item))}
                             </ListTag>
                           );
 

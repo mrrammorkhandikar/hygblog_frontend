@@ -57,8 +57,8 @@ export default function CategoriesBox({ onCategoryClick }: CategoriesBoxProps) {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6 mb-6">
-      <h3 className="text-lg font-semibold text-[#0f766e] mb-4" style={{ fontFamily: '"Playfair Display", serif' }}>
+    <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-4 md:p-6 mb-6">
+      <h3 className="text-base md:text-lg font-semibold text-[#0f766e] mb-3 md:mb-4" style={{ fontFamily: '"Playfair Display", serif' }}>
         Categories
       </h3>
 
@@ -67,29 +67,30 @@ export default function CategoriesBox({ onCategoryClick }: CategoriesBoxProps) {
           <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-[#0f766e]"></div>
         </div>
       ) : categories.length === 0 ? (
-        <p className="text-slate-500 text-sm">No categories available</p>
+        <p className="text-slate-500 text-xs md:text-sm">No categories available</p>
       ) : (
-        <div className="space-y-3">
+        <div className="grid grid-cols-2 md:grid-cols-1 gap-2 md:gap-3 md:space-y-3">
           {categories.map((category) => (
             <div
               key={category.id}
-              className="flex items-center space-x-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer transition"
+              className="flex items-center space-x-2 md:space-x-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer transition-all duration-200"
               onClick={() => handleCategoryClick(category.id)}
             >
               {isImageUrl(category.icon || category.icon_url) ? (
                 <img
                   src={(category.icon || category.icon_url) as string}
                   alt={`${category.name} icon`}
-                  className="w-6 h-6 object-cover rounded"
+                  className="w-5 h-5 md:w-6 md:h-6 object-cover rounded"
+                  loading="lazy"
                 />
               ) : (
-                <div className="w-6 h-6 bg-[#f0fdfa] rounded flex items-center justify-center">
-                  <span className="text-[#0f766e] font-semibold text-xs">
+                <div className="w-5 h-5 md:w-6 md:h-6 bg-[#f0fdfa] rounded flex items-center justify-center flex-shrink-0">
+                  <span className="text-[#0f766e] font-semibold text-xs md:text-sm">
                     {category.name.charAt(0).toUpperCase()}
                   </span>
                 </div>
               )}
-              <span className="text-sm text-slate-700 hover:text-[#0f766e] transition">
+              <span className="text-sm md:text-sm text-slate-700 hover:text-[#0f766e] transition-all duration-200 truncate">
                 {category.name}
               </span>
             </div>

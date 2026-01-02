@@ -337,7 +337,7 @@ export default function ProductsPage() {
                 className="text-5xl md:text-6xl font-extrabold text-[#0f766e] mb-4 leading-tight"
                 style={{ fontFamily: '"Playfair Display", serif' }}
               >
-                Our Books
+                Our Products
               </h1>
               <p className="text-lg text-slate-600 max-w-2xl mx-auto">
                 Discover comprehensive health and hygiene guides from Dr. Bushra Mirza
@@ -578,7 +578,7 @@ export default function ProductsPage() {
               transition={{ duration: 0.7 }}
             >
               <h2 className="text-3xl md:text-4xl font-bold text-[#0f766e]" style={{ fontFamily: '"Playfair Display", serif' }}>
-                More Books Coming Soon
+                More Products Coming Soon
               </h2>
               <p className="text-lg text-slate-600 max-w-2xl mx-auto mt-4">
                 Stay tuned for more comprehensive health and hygiene guides from Dr. Bushra Mirza

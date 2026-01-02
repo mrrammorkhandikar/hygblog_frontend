@@ -619,6 +619,16 @@ export default function HomePage({ token = '' }: Partial<Props>) {
                 </div>
 
               </div>
+
+              <div className="mt-6">
+                <Button
+                  onClick={() => (window.location.href = '/newsletter')}
+                  className="inline-flex items-center justify-center rounded-full px-6 py-3 bg-gradient-to-r from-[#0f766e] to-[#06b6d4] text-white hover:from-[#0d5e59] hover:to-[#0891b2] transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl md:justify-start"
+                >
+                  <Mail className="w-4 h-4 mr-2" />
+                  Subscribe Our Newsletter
+                </Button>
+              </div>
             </motion.div>
 
             <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }} className="bg-white px-6 py-8 rounded-2xl shadow-lg">

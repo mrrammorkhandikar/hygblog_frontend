@@ -125,7 +125,7 @@ initial={{ opacity: 0 }}
 animate={{ opacity: 1 }}
 transition={{ delay: 0.6, duration: 0.7 }}
 >
-<Button
+              <Button
                 onClick={() => (window.location.href = '/blogs')}
                 className="bg-[#0f766e] hover:bg-[#0d5e59] text-white inline-flex items-center justify-center rounded-full px-[31px] py-[19px] text-[15px] border border-[#c6f6e6] transition shadow-sm"
               >
@@ -694,6 +694,16 @@ Visit Website
                   <Phone className="text-[#0f766e]" />
                   <span>+91 952 904 5550</span>
                 </div>
+              </div>
+
+              <div className="mt-6">
+                <Button
+                  onClick={() => (window.location.href = '/newsletter')}
+                  className="inline-flex items-center justify-center rounded-full px-6 py-3 bg-gradient-to-r from-[#0f766e] to-[#06b6d4] text-white hover:from-[#0d5e59] hover:to-[#0891b2] transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl md:justify-start"
+                >
+                  <Mail className="w-4 h-4 mr-2" />
+                  Subscribe Our Newsletter
+                </Button>
               </div>
             </motion.div>
 

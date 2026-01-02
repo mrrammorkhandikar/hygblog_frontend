@@ -1227,20 +1227,31 @@ export default function CreatePost() {
 
                         case 'ul':
                         case 'ol':
+                          const renderListItem = (item: ListItem): React.ReactNode => {
+                            const content = item.type === 'text' ? (item.content || 'Empty item') : (
+                              item.content ? (
+                                <img src={item.content} alt={item.imageMetadata?.alt || ''} className="rounded max-w-sm" />
+                              ) : (
+                                <div className="text-gray-400">Image item</div>
+                              )
+                            );
+
+                            return (
+                              <li key={item.id} className="mb-2">
+                                {content}
+                                {item.nestedList && item.nestedList.items.length > 0 && (
+                                  <ul className="ml-6 mt-2 list-disc">
+                                    {item.nestedList.items.map(nestedItem => renderListItem(nestedItem))}
+                                  </ul>
+                                )}
+                              </li>
+                            );
+                          };
+
                           const ListTag = type;
                           return (
                             <ListTag key={block.id} className="mb-8 pl-6 list-disc text-black">
-                              {(listItems || []).map((item) => (
-                                <li key={item.id} className="mb-2">
-                                  {item.type === 'text' ? (item.content || 'Empty item') : (
-                                    item.content ? (
-                                      <img src={item.content} alt={item.imageMetadata?.alt || ''} className="rounded max-w-sm" />
-                                    ) : (
-                                      <div className="text-gray-400">Image item</div>
-                                    )
-                                  )}
-                                </li>
-                              ))}
+                              {(listItems || []).map((item) => renderListItem(item))}
                             </ListTag>
                           );
 
