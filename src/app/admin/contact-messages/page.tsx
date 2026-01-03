@@ -18,6 +18,8 @@ export default function AdminContactMessages() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Search and filter
   const [searchTerm, setSearchTerm] = useState('');
@@ -234,6 +236,15 @@ export default function AdminContactMessages() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center space-x-3">
                         <button
+                          onClick={() => {
+                            setSelectedMessage(message);
+                            setIsModalOpen(true);
+                          }}
+                          className="text-teal-600 hover:text-teal-900 text-sm font-medium"
+                        >
+                          View Full Message
+                        </button>
+                        <button
                           onClick={() => handleDelete(message.id)}
                           className="text-red-600 hover:text-red-900 text-sm font-medium"
                         >
@@ -320,6 +331,69 @@ export default function AdminContactMessages() {
 
             <div className="text-sm text-gray-700">
               Page {currentPage} of {totalPages}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Message Modal */}
+      {isModalOpen && selectedMessage && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900">Complete Message</h2>
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                  aria-label="Close modal"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Username</label>
+                    <div className="mt-1 text-gray-900">{selectedMessage.username || '—'}</div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Email</label>
+                    <div className="mt-1 text-gray-900">{selectedMessage.email || '—'}</div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Subject</label>
+                  <div className="mt-1 text-gray-900">{selectedMessage.subject || '—'}</div>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Message</label>
+                  <div className="mt-1 p-4 bg-gray-50 rounded-lg border border-gray-200 whitespace-pre-wrap text-black">
+                    {selectedMessage.message}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Received</label>
+                  <div className="mt-1 text-gray-900">
+                    {new Date(selectedMessage.created_at).toLocaleDateString()} at {new Date(selectedMessage.created_at).toLocaleTimeString()}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 flex justify-end">
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         </div>
