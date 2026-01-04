@@ -56,26 +56,64 @@ export default function CareersPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      // Handle form submission (e.g., send to backend)
-      console.log('Form submitted:', formData);
-      alert('Application submitted successfully!');
-      // Reset form
-      setFormData({
-        fullName: '',
-        email: '',
-        contactNumber: '',
-        location: '',
-        ageGroup: '',
-        educationLevel: '',
-        otherEducation: '',
-        position: '',
-        experienceLevel: '',
-        otherExperience: '',
-        resume: null,
-      });
+      try {
+        // Prepare form data for API submission
+        const formDataToSend = new FormData();
+        formDataToSend.append('fullName', formData.fullName.trim());
+        formDataToSend.append('email', formData.email.trim());
+        formDataToSend.append('contactNumber', formData.contactNumber.trim());
+        formDataToSend.append('location', formData.location.trim());
+        formDataToSend.append('ageGroup', formData.ageGroup);
+        formDataToSend.append('education', formData.educationLevel === 'Other' ? formData.otherEducation : formData.educationLevel);
+        formDataToSend.append('internshipPosition', formData.position);
+        formDataToSend.append('experience', formData.experienceLevel === 'Other' ? formData.otherExperience : formData.experienceLevel);
+
+        if (formData.resume) {
+          formDataToSend.append('resume', formData.resume);
+        }
+
+        // Send to backend
+        const API_BASE = process.env.NEXT_PUBLIC_ADMIN_API || 'http://localhost:8080';
+        const response = await fetch(`${API_BASE}/job-applications`, {
+          method: 'POST',
+          body: formDataToSend,
+        });
+
+        if (!response.ok) {
+          const errorData = await response.text();
+          console.error('Server response:', errorData);
+          throw new Error(`Failed to submit application: ${response.status} ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        console.log('Application submitted successfully:', result);
+        alert('Application submitted successfully!');
+
+        // Reset form
+        setFormData({
+          fullName: '',
+          email: '',
+          contactNumber: '',
+          location: '',
+          ageGroup: '',
+          educationLevel: '',
+          otherEducation: '',
+          position: '',
+          experienceLevel: '',
+          otherExperience: '',
+          resume: null,
+        });
+      } catch (error) {
+        console.error('Error submitting application:', error);
+        let errorMessage = 'Failed to submit application. Please try again.';
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        }
+        alert(errorMessage);
+      }
     }
   };
 

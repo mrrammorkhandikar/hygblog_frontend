@@ -21,7 +21,8 @@ import {
   Settings,
   Image as ImageIcon,
   Users2,
-  Package
+  Package,
+  Briefcase
 } from "lucide-react";
 
 const navigation = [
@@ -35,8 +36,8 @@ const adminNavigation = [
   { name: 'Authors', href: '/admin/authors', icon: Users },
   { name: 'Teams', href: '/admin/teams', icon: Users2 },
   { name: 'Products', href: '/admin/products', icon: Package },
-  { name: 'Contact Messages', href: '/admin/contact-messages', icon: Settings }
-
+  { name: 'Contact Messages', href: '/admin/contact-messages', icon: Settings },
+  { name: 'Job Applications', href: '/admin/job-applications', icon: Briefcase }
 ];
 
 export default function AdminLayout({

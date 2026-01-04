@@ -225,7 +225,7 @@ export default function CreatePost() {
   const [titleImageUrl, setTitleImageUrl] = useState<string | null>(null);
 
   const [contentBlocks, setContentBlocks] = useState<ContentBlock[]>([
-    { id: '1', type: 'text', content: '', metadata: { level: 1 } }
+    { id: '1', type: 'text', content: '', metadata: { level: 0 } }
   ]);
 
   const [categories, setCategories] = useState<Category[]>([]);
@@ -373,7 +373,7 @@ export default function CreatePost() {
       id: Date.now().toString(),
       type,
       content: '',
-      metadata: type === 'text' ? { level: 1 } : type === 'image' ? { size: 'medium', alt: '' } : undefined,
+      metadata: type === 'text' ? { level: 0 } : type === 'image' ? { size: 'medium', alt: '' } : undefined,
       affiliateLink: { type: null }
     };
 
@@ -961,6 +961,28 @@ export default function CreatePost() {
                               </div>
                             )}
 
+                            {/* Affiliate Link for List Item */}
+                            <div className="border-t pt-2 mt-2">
+                              <h4 className="text-xs font-medium text-gray-700 mb-1">Item Affiliate Link (Optional)</h4>
+                              <div className="flex space-x-3 mb-1">
+                                <label className="flex items-center">
+                                  <input type="radio" name={`item-aff-${item.id}`} value="custom" checked={item.affiliateLink?.type === 'custom'} onChange={() => updateListItem(block.id, item.id, { affiliateLink: { type: 'custom', name: '', url: '' } })} className="text-black placeholder-gray-500" />
+                                  <span className="ml-1 text-xs text-black placeholder-gray-500">Custom</span>
+                                </label>
+                                <label className="flex items-center">
+                                  <input type="radio" name={`item-aff-${item.id}`} value="none" checked={!item.affiliateLink?.type} onChange={() => updateListItem(block.id, item.id, { affiliateLink: { type: null } })} className="text-black placeholder-gray-500" />
+                                  <span className="ml-1 text-xs text-black placeholder-gray-500">None</span>
+                                </label>
+                              </div>
+
+                              {item.affiliateLink?.type === 'custom' && (
+                                <div className="space-y-1">
+                                  <input type="text" placeholder="Button text" value={item.affiliateLink?.name || ''} onChange={(e) => updateListItem(block.id, item.id, { affiliateLink: { ...item.affiliateLink, name: e.target.value, type: item.affiliateLink?.type ?? null } })} className="w-full text-xs border rounded p-1 text-black placeholder-gray-500" />
+                                  <input type="url" placeholder="https://..." value={item.affiliateLink?.url || ''} onChange={(e) => updateListItem(block.id, item.id, { affiliateLink: { ...item.affiliateLink, url: e.target.value, type: item.affiliateLink?.type ?? null } })} className="w-full text-xs border rounded p-1 text-black placeholder-gray-500" />
+                                </div>
+                              )}
+                            </div>
+
                             {/* Nested List */}
                             {item.nestedList && item.nestedList.items.length > 0 && (
                               <div className="pl-4 mt-2 border-l-2 border-gray-200">
@@ -1236,9 +1258,18 @@ export default function CreatePost() {
                               )
                             );
 
+                            // Wrap content with affiliate link if available
+                            // First check item-level affiliate link, then fall back to block-level
+                            const itemAffiliateLink = item.affiliateLink?.url || block.affiliateLink?.url;
+                            const itemContent = itemAffiliateLink ? (
+                              <a href={itemAffiliateLink} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                                {content}
+                              </a>
+                            ) : content;
+
                             return (
                               <li key={item.id} className="mb-2">
-                                {content}
+                                {itemContent}
                                 {item.nestedList && item.nestedList.items.length > 0 && (
                                   <ul className="ml-6 mt-2 list-disc">
                                     {item.nestedList.items.map(nestedItem => renderListItem(nestedItem))}
