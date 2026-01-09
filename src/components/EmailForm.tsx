@@ -234,49 +234,45 @@ const EmailFormWithVisualEditor: React.FC<Props> = ({
         <CardContent className="space-y-4 pt-6">
           <div className="flex justify-between items-center">
             <h2 className="text-lg font-semibold">Recipients</h2>
-            {!isEditing && (
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline" onClick={onLoadSubscribers}>
-                  <Users className="w-4 h-4 mr-1" /> Load Subscribers
-                </Button>
-                <Button size="sm" variant="outline" onClick={addMultipleEmails}>
-                  <Plus className="w-4 h-4 mr-1" /> Add Multiple
-                </Button>
-              </div>
-            )}
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={onLoadSubscribers}>
+                <Users className="w-4 h-4 mr-1" /> Load Subscribers
+              </Button>
+              <Button size="sm" variant="outline" onClick={addMultipleEmails}>
+                <Plus className="w-4 h-4 mr-1" /> Add Multiple
+              </Button>
+            </div>
           </div>
 
           {/* Quick Add Section */}
-          {!isEditing && (
-            <div className="space-y-3">
-              <div className="flex gap-2">
-                <Input
-                  value={emailInput}
-                  onChange={(e) => setEmailInput(e.target.value)}
-                  placeholder="Add email (or comma-separated list)"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      addMultipleEmails();
-                    }
-                  }}
-                />
-                <Button 
-                  size="sm" 
-                  onClick={addMultipleEmails}
-                  disabled={!emailInput.trim()}
-                >
-                  <UserPlus className="w-4 h-4 mr-1" /> Add
-                </Button>
-              </div>
-              
-              {emailInput && (
-                <div className="text-xs text-gray-600">
-                  Tip: You can add multiple emails separated by commas or new lines
-                </div>
-              )}
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <Input
+                value={emailInput}
+                onChange={(e) => setEmailInput(e.target.value)}
+                placeholder="Add email (or comma-separated list)"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addMultipleEmails();
+                  }
+                }}
+              />
+              <Button
+                size="sm"
+                onClick={addMultipleEmails}
+                disabled={!emailInput.trim()}
+              >
+                <UserPlus className="w-4 h-4 mr-1" /> Add
+              </Button>
             </div>
-          )}
+
+            {emailInput && (
+              <div className="text-xs text-gray-600">
+                Tip: You can add multiple emails separated by commas or new lines
+              </div>
+            )}
+          </div>
 
           {/* Recipients List */}
           {recipientsArray.length > 0 && (
@@ -296,16 +292,14 @@ const EmailFormWithVisualEditor: React.FC<Props> = ({
                         <div className={`w-2 h-2 rounded-full ${isValid ? 'bg-green-500' : 'bg-red-500'}`} />
                         <span className="text-sm font-medium">{email}</span>
                       </div>
-                      {!isEditing && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => removeEmail(email)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-100"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      )}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => removeEmail(email)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-100"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </div>
                   );
                 })}
@@ -328,45 +322,43 @@ const EmailFormWithVisualEditor: React.FC<Props> = ({
           </div>
           
           {/* Recipients summary and validation feedback */}
-          {!isEditing && (
-            <div className="space-y-2">
-              <div className="text-xs text-gray-600">
-                <p>Enter one email address per line. Example:</p>
-                <p className="text-gray-400 mt-1">john@example.com</p>
-                <p className="text-gray-400">jane@company.org</p>
-                <p className="text-gray-400">support@business.com</p>
-              </div>
-              
-              <div className="flex justify-between items-center">
-                <div className="text-xs">
-                  {touched.recipients && errors.recipients && (
-                    <span className="text-red-600 flex items-center">
-                      <AlertCircle className="w-3 h-3 mr-1" /> {errors.recipients}
-                    </span>
-                  )}
-                  {touched.recipients && !errors.recipients && formData.recipients.trim().length > 0 && (
-                    <span className="text-green-600 flex items-center">
-                      <CheckCircle className="w-3 h-3 mr-1" /> Valid recipients
-                    </span>
-                  )}
-                </div>
-                
-                {/* Recipients count */}
-                {formData.recipients.trim().length > 0 && (
-                  <div className="text-xs text-gray-600">
-                    {(() => {
-                      const emails = formData.recipients
-                        .split('\n')
-                        .map(email => email.trim())
-                        .filter(email => email.length > 0);
-                      const validEmails = emails.filter(email => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
-                      return `${validEmails.length} valid recipient${validEmails.length !== 1 ? 's' : ''}`;
-                    })()}
-                  </div>
+          <div className="space-y-2">
+            <div className="text-xs text-gray-600">
+              <p>Enter one email address per line. Example:</p>
+              <p className="text-gray-400 mt-1">john@example.com</p>
+              <p className="text-gray-400">jane@company.org</p>
+              <p className="text-gray-400">support@business.com</p>
+            </div>
+
+            <div className="flex justify-between items-center">
+              <div className="text-xs">
+                {touched.recipients && errors.recipients && (
+                  <span className="text-red-600 flex items-center">
+                    <AlertCircle className="w-3 h-3 mr-1" /> {errors.recipients}
+                  </span>
+                )}
+                {touched.recipients && !errors.recipients && formData.recipients.trim().length > 0 && (
+                  <span className="text-green-600 flex items-center">
+                    <CheckCircle className="w-3 h-3 mr-1" /> Valid recipients
+                  </span>
                 )}
               </div>
+
+              {/* Recipients count */}
+              {formData.recipients.trim().length > 0 && (
+                <div className="text-xs text-gray-600">
+                  {(() => {
+                    const emails = formData.recipients
+                      .split('\n')
+                      .map(email => email.trim())
+                      .filter(email => email.length > 0);
+                    const validEmails = emails.filter(email => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
+                    return `${validEmails.length} valid recipient${validEmails.length !== 1 ? 's' : ''}`;
+                  })()}
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </CardContent>
       </Card>
 

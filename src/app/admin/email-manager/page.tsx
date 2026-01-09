@@ -816,13 +816,11 @@ export default function EmailManagerPage() {
         if (!value.includes('<') || !value.includes('>')) return 'Content should contain HTML tags';
         return '';
       case 'recipients':
-        if (!isEditing) {
-          const emails = value.split('\n').map(email => email.trim()).filter(email => email.length > 0);
-          if (emails.length === 0) return 'At least one recipient is required';
-          
-          const invalidEmails = emails.filter(email => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
-          if (invalidEmails.length > 0) return `Invalid email addresses: ${invalidEmails.join(', ')}`;
-        }
+        const emails = value.split('\n').map(email => email.trim()).filter(email => email.length > 0);
+        if (emails.length === 0) return 'At least one recipient is required';
+
+        const invalidEmails = emails.filter(email => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
+        if (invalidEmails.length > 0) return `Invalid email addresses: ${invalidEmails.join(', ')}`;
         return '';
       case 'scheduled_time':
         if (value && new Date(value) <= new Date()) return 'Scheduled time must be in the future';
@@ -834,9 +832,8 @@ export default function EmailManagerPage() {
 
   const validateForm = (): boolean => {
     const newErrors: {[key: string]: string} = {};
-    const fieldsToValidate = ['title', 'subject', 'html'];
-    
-    if (!isEditing) fieldsToValidate.push('recipients');
+    const fieldsToValidate = ['title', 'subject', 'html', 'recipients'];
+
     if (formData.is_scheduled) fieldsToValidate.push('scheduled_time');
 
     fieldsToValidate.forEach(field => {
@@ -1089,7 +1086,7 @@ export default function EmailManagerPage() {
           subject: formData.subject.trim(),
           html: formData.html
         },
-        emails: isEditing ? undefined : recipientsList.length > 0 ? {
+        emails: recipientsList.length > 0 ? {
           count: recipientsList.length,
           list: recipientsList
         } : null,
