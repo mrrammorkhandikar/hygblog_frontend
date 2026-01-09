@@ -107,6 +107,9 @@ const EmailFormWithVisualEditor: React.FC<Props> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    console.log('=== FORM SUBMISSION START ===');
+    console.log('Complete form data before processing:', formData);
+
     // Export HTML content from editor before submitting
     const htmlPromise = new Promise<string>((resolve) => {
       editorRef.current?.editor.exportHtml((data: any) => {
