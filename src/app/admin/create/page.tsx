@@ -611,9 +611,8 @@ export default function CreatePost() {
 
         // Handle scheduled publishing
         if (schedulePublish && scheduledDateTime) {
-          // Convert datetime-local input (local time) to UTC ISO string
-          const localDateTime = new Date(scheduledDateTime);
-          postData.shedule_publish = localDateTime.toISOString();
+          // Store the datetime-local input directly as selected by user
+          postData.shedule_publish = scheduledDateTime;
         }
       }
 

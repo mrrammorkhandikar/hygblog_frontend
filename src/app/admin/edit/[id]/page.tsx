@@ -693,9 +693,8 @@ const getContextFromForm = (): LLMSuggestionContext & { content?: string } => {
 
         // Handle scheduled publishing
         if (schedulePublish && scheduledDateTime) {
-          // Convert datetime-local input (local time) to UTC ISO string
-          const localDateTime = new Date(scheduledDateTime);
-          payload.shedule_publish = localDateTime.toISOString();
+          // Store the datetime-local input directly as selected by user
+          payload.shedule_publish = scheduledDateTime;
         } else {
           // Clear scheduling if not scheduling
           payload.shedule_publish = null;
