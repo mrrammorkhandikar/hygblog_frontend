@@ -277,7 +277,12 @@ export default function EditPost() {
         // Load scheduling data
         if (post.shedule_publish) {
           setSchedulePublish(true);
-          setScheduledDateTime(new Date(post.shedule_publish).toISOString().slice(0, 16));
+          const d = new Date(post.shedule_publish);
+          setScheduledDateTime(
+            `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+          );
+
+
         }
         if (post.notification_email_id) {
           setSelectedEmailId(post.notification_email_id);
@@ -691,10 +696,12 @@ const getContextFromForm = (): LLMSuggestionContext & { content?: string } => {
         payload.featured = featured;
         payload.published = published;
 
-        // Handle scheduled publishing
+      // Handle scheduled publishing
         if (schedulePublish && scheduledDateTime) {
-          // Store the datetime-local input directly as selected by user
-          payload.shedule_publish = scheduledDateTime;
+          // Convert datetime-local input (local time) to UTC ISO string
+          payload.shedule_publish = new Date(scheduledDateTime).toISOString();
+
+
         } else {
           // Clear scheduling if not scheduling
           payload.shedule_publish = null;
