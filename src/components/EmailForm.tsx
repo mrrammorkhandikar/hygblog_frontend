@@ -118,8 +118,8 @@ const EmailFormWithVisualEditor: React.FC<Props> = ({
     if (formData.is_scheduled && formData.scheduled_time) {
       const localDateTime = new Date(formData.scheduled_time);
       // Add 5 hours and 30 minutes to convert from Asia/Calcutta (UTC+5.5) to UTC
-      localDateTime.setHours(localDateTime.getHours() + 5);
-      localDateTime.setMinutes(localDateTime.getMinutes() + 30);
+      localDateTime.setHours(localDateTime.getHours() - 5);
+      localDateTime.setMinutes(localDateTime.getMinutes() - 30);
       const utcISOString = localDateTime.toISOString();
       onFieldChange('scheduled_time', utcISOString);
     }
