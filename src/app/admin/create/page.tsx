@@ -216,6 +216,12 @@ export default function CreatePost() {
   const [author, setAuthor] = useState('');
   const [featured, setFeatured] = useState(false);
   const [published, setPublished] = useState(false);
+  const [schedulePublish, setSchedulePublish] = useState(false);
+  const [scheduledDateTime, setScheduledDateTime] = useState('');
+  const [isScheduleInvalid, setIsScheduleInvalid] = useState(false);
+  const [sendNotification, setSendNotification] = useState(false);
+  const [selectedEmailId, setSelectedEmailId] = useState('');
+  const [draftEmails, setDraftEmails] = useState<{id: string, title: string}[]>([]);
 
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
@@ -357,6 +363,41 @@ export default function CreatePost() {
   useEffect(() => {
     validateForm();
   }, [title, validateForm]);
+
+  // Fetch draft blog post emails when send notification is enabled
+  useEffect(() => {
+    if (sendNotification && token) {
+      apiGet<{data: {id: string, title: string}[]}>('/email-manager?status=Draft&type=New Post', token)
+        .then(data => {
+          setDraftEmails(data.data || []);
+        })
+        .catch(err => {
+          console.error('Failed to load draft emails:', err);
+        });
+    } else {
+      setDraftEmails([]);
+      setSelectedEmailId('');
+    }
+  }, [sendNotification, token]);
+
+  // Reset notification options when publish is unchecked
+  useEffect(() => {
+    if (!published) {
+      setSendNotification(false);
+      setSelectedEmailId('');
+    }
+  }, [published]);
+
+  // Validate scheduled date time
+  useEffect(() => {
+    if (scheduledDateTime) {
+      const selectedDate = new Date(scheduledDateTime);
+      const now = new Date();
+      setIsScheduleInvalid(selectedDate <= now);
+    } else {
+      setIsScheduleInvalid(false);
+    }
+  }, [scheduledDateTime]);
 
   // Set author name for authors and default for admins
   useEffect(() => {
@@ -567,9 +608,35 @@ export default function CreatePost() {
       if (currentUser?.role === 'admin') {
         postData.featured = featured;
         postData.published = published;
+
+        // Handle scheduled publishing
+        if (schedulePublish && scheduledDateTime) {
+          // Convert datetime-local input to PostgreSQL timestamp format: YYYY-MM-DD HH:mm:ss+00
+          const localDateTime = new Date(scheduledDateTime + ':00'); // Add seconds if missing
+          const year = localDateTime.getFullYear();
+          const month = String(localDateTime.getMonth() + 1).padStart(2, '0');
+          const day = String(localDateTime.getDate()).padStart(2, '0');
+          const hours = String(localDateTime.getHours()).padStart(2, '0');
+          const minutes = String(localDateTime.getMinutes()).padStart(2, '0');
+          const seconds = String(localDateTime.getSeconds()).padStart(2, '0');
+
+          postData.shedule_publish = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}+00`;
+        }
       }
 
-      await apiPost('/posts', token, postData);
+      const createdPost = await apiPost('/posts', token, postData);
+
+      // Send notification email if requested and post is published
+      if (sendNotification && selectedEmailId && published) {
+        try {
+          await apiPost(`/email-manager/${selectedEmailId}/send`, token, {});
+          console.log('Notification email sent successfully');
+        } catch (emailError) {
+          console.error('Failed to send notification email:', emailError);
+          // Don't fail the entire operation if email fails
+        }
+      }
+
       router.push('/admin/dashboard');
     } catch (err: any) {
       console.error('Create post failed:', err);
@@ -658,16 +725,133 @@ export default function CreatePost() {
             )}
           </div>
           {currentUser?.role === 'admin' && (
-            <div className="flex items-center space-x-6">
-              <label className="flex items-center">
-                <input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} className="rounded border-gray-300 text-teal-600" />
-                <span className="ml-2 text-sm text-gray-700">Featured Post</span>
-              </label>
-              <label className="flex items-center">
-                <input type="checkbox" checked={published} onChange={(e) => setPublished(e.target.checked)} className="rounded border-gray-300 text-teal-600" />
-                <span className="ml-2 text-sm text-gray-700">Publish Immediately</span>
-              </label>
-            </div>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-6">
+                  <label className="flex items-center">
+                    <input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} className="rounded border-gray-300 text-teal-600" />
+                    <span className="ml-2 text-sm text-gray-700">Featured Post</span>
+                  </label>
+                </div>
+
+                {/* Publishing Options */}
+                <div className="border-t pt-4 space-y-4">
+                  <div className="flex items-center space-x-6">
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={published}
+                        onChange={(e) => {
+                          setPublished(e.target.checked);
+                          if (e.target.checked) {
+                            // When Publish Immediately is checked, hide Schedule Publish and notification options
+                            setSchedulePublish(false);
+                            setScheduledDateTime('');
+                          }
+                        }}
+                        className="text-teal-600"
+                      />
+                      <span className="ml-2 text-sm text-gray-700">Publish Immediately</span>
+                    </label>
+                    {!published && (
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={schedulePublish}
+                          onChange={(e) => {
+                            setSchedulePublish(e.target.checked);
+                            if (e.target.checked) {
+                              setPublished(false);
+                            }
+                          }}
+                          className="text-teal-600"
+                        />
+                        <span className="ml-2 text-sm text-gray-700">Schedule Publish</span>
+                      </label>
+                    )}
+                  </div>
+
+                  {/* Schedule Publish Options */}
+                  {schedulePublish && !published && (
+                    <div className="ml-6 space-y-4">
+                      <div>
+                        <label htmlFor="scheduledDateTime" className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                          <span>📅 Publish Date & Time</span>
+                          <span className="text-xs text-gray-500">(Future dates only)</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            id="scheduledDateTime"
+                            type="datetime-local"
+                            value={scheduledDateTime}
+                            onChange={(e) => setScheduledDateTime(e.target.value)}
+                            min={new Date().toISOString().slice(0, 16)}
+                            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 text-black ${
+                              isScheduleInvalid
+                                ? 'border-red-300 focus:ring-red-500 bg-red-50'
+                                : 'border-gray-300 focus:ring-teal-500'
+                            }`}
+                            required={schedulePublish}
+                          />
+                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                            🕐
+                          </div>
+                        </div>
+                        {isScheduleInvalid && scheduledDateTime && (
+                          <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                            <span>⚠️</span> Please select a future date and time
+                          </p>
+                        )}
+                        {!isScheduleInvalid && scheduledDateTime && (
+                          <p className="mt-1 text-sm text-green-600 flex items-center gap-1">
+                            <span>✅</span> Valid schedule time
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Send notification email - only show if Publish Immediately is checked */}
+                  {published && (
+                    <div className="ml-6 space-y-4">
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={sendNotification}
+                          onChange={(e) => setSendNotification(e.target.checked)}
+                          className="rounded border-gray-300 text-teal-600"
+                        />
+                        <span className="ml-2 text-sm text-gray-700">Send notification email</span>
+                      </label>
+
+                      {sendNotification && (
+                        <div>
+                          <label htmlFor="notificationEmail" className="block text-sm font-medium text-gray-700 mb-2">
+                            Select Email Template
+                          </label>
+                          <select
+                            id="notificationEmail"
+                            value={selectedEmailId}
+                            onChange={(e) => setSelectedEmailId(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 text-black"
+                          >
+                            <option value="">Select a draft blog post email...</option>
+                            {draftEmails.map(email => (
+                              <option key={email.id} value={email.id}>
+                                {email.title}
+                              </option>
+                            ))}
+                          </select>
+                          {draftEmails.length === 0 && (
+                            <p className="text-sm text-gray-500 mt-1">
+                              No draft blog post emails available. Create one in the Email Manager first.
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
           )}
         </div>
       </div>

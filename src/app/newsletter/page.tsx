@@ -1,16 +1,101 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useUser } from '@/contexts/UserContext';
 
 export default function NewsletterPage() {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
+  const [uniqueUserId, setUniqueUserId] = useState('');
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCheckingSubscription, setIsCheckingSubscription] = useState(true);
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  const [emailExists, setEmailExists] = useState(false);
+  const [existingSubscription, setExistingSubscription] = useState<any>(null);
+  const [isEditing, setIsEditing] = useState(false);
+
+  // Check if user is already subscribed when page loads
+  useEffect(() => {
+    const checkSubscriptionStatus = async () => {
+      try {
+        // Get user ID from localStorage if available (from "Get in Touch" form)
+        const userId = localStorage.getItem('userId') || localStorage.getItem('unique_user_id');
+        
+        if (userId) {
+          setUniqueUserId(userId); // Set the unique user ID for form submission
+          
+          // Auto-fill form with user details from localStorage
+          const storedUser = localStorage.getItem('blogUser');
+          if (storedUser) {
+            try {
+              const parsedUser = JSON.parse(storedUser);
+              if (parsedUser.email) setEmail(parsedUser.email);
+              if (parsedUser.username) setName(parsedUser.username);
+            } catch (error) {
+              console.error('Error parsing stored user:', error);
+            }
+          }
+          
+          // Check subscription status using the unique_user_id
+          const API_BASE = process.env.NEXT_PUBLIC_ADMIN_API || 'http://localhost:8080';
+          const response = await fetch(`${API_BASE}/newsletter/check?unique_user_id=${userId}`);
+
+          if (response.ok) {
+            const result = await response.json();
+            if (result.isSubscribed) {
+              // User is already subscribed - show welcome message with their details
+              setExistingSubscription(result.subscriber);
+              setIsSubscribed(true); // Show welcome message
+              setIsEditing(false); // Don't show edit form yet
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Failed to check subscription status:', err);
+      } finally {
+        setIsCheckingSubscription(false);
+      }
+    };
+
+    checkSubscriptionStatus();
+  }, []);
+
+  // Check if email already exists when email changes
+  useEffect(() => {
+    const checkEmailExists = async () => {
+      // Only check if email is valid and not empty
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        setEmailExists(false);
+        return;
+      }
+
+      try {
+        setIsCheckingEmail(true);
+        const API_BASE = process.env.NEXT_PUBLIC_ADMIN_API || 'http://localhost:8080';
+        const response = await fetch(`${API_BASE}/newsletter/check?email=${encodeURIComponent(email)}`);
+
+        if (response.ok) {
+          const result = await response.json();
+          setEmailExists(result.isSubscribed);
+        }
+      } catch (err) {
+        console.error('Failed to check email existence:', err);
+        setEmailExists(false);
+      } finally {
+        setIsCheckingEmail(false);
+      }
+    };
+
+    // Debounce the email check to avoid too many API calls
+    const debounceTimer = setTimeout(checkEmailExists, 500);
+
+    return () => clearTimeout(debounceTimer);
+  }, [email]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,24 +115,61 @@ export default function NewsletterPage() {
       return;
     }
 
+    // Check if email already exists
+    if (emailExists) {
+      setError('This email is already subscribed to our newsletter!');
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Call backend API
+      const API_BASE = process.env.NEXT_PUBLIC_ADMIN_API || 'http://localhost:8080';
 
-      // In a real implementation, you would call your backend API here
-      // const response = await fetch('/api/newsletter/subscribe', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify({ email, name }),
-      // });
+      // Include unique_user_id if available (either from localStorage or already set)
+      const requestBody: any = { email, name };
+      const userId = localStorage.getItem('userId') || localStorage.getItem('unique_user_id') || uniqueUserId;
+      if (userId && userId !== '') {
+        requestBody.unique_user_id = userId;
+      }
 
-      // if (!response.ok) {
-      //   throw new Error('Subscription failed');
-      // }
+      const response = await fetch(`${API_BASE}/newsletter/subscribe`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
 
-      setIsSubscribed(true);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Subscription failed');
+      }
+
+      const result = await response.json();
+
+      // Show success message for both new subscriptions and updates
+      if (result.message.includes('Already subscribed') || result.message.includes('Successfully subscribed') || result.message.includes('Subscription updated')) {
+        setIsSubscribed(true);
+
+        // If this was an edit, reload the subscription data
+        if (isEditing) {
+          const userId = localStorage.getItem('userId');
+          if (userId) {
+            const checkResponse = await fetch(`${API_BASE}/newsletter/check?unique_user_id=${userId}`);
+            if (checkResponse.ok) {
+              const checkResult = await checkResponse.json();
+              if (checkResult.isSubscribed) {
+                setExistingSubscription(checkResult.subscriber);
+              }
+            }
+          }
+        }
+      } else {
+        // Handle unexpected responses
+        setError('Subscription successful, but received unexpected response');
+        console.log('Unexpected response:', result);
+      }
     } catch (err) {
       setError('Subscription failed. Please try again later.');
     } finally {
@@ -122,28 +244,74 @@ export default function NewsletterPage() {
       <section className="relative bg-white -mt-8 pt-16 pb-20">
         <div className="max-w-2xl mx-auto px-6 md:px-12 lg:px-20">
           {isSubscribed ? (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="text-center py-12"
-            >
-              <div className="w-20 h-20 bg-[#0f766e] rounded-full flex items-center justify-center mx-auto mb-6">
-                <CheckCircle className="w-10 h-10 text-white" />
-              </div>
-              <h2 className="text-3xl font-bold text-[#0f766e] mb-4" style={{ fontFamily: '"Playfair Display", serif' }}>
-                Thank You for Subscribing!
-              </h2>
-              <p className="text-lg text-slate-600 mb-8">
-                You've successfully subscribed to HygieneShelf newsletter.
-                Get ready to receive valuable health insights and wellness tips from Dr. Bushra Mirza.
-              </p>
-              <Button
-                onClick={() => (window.location.href = '/')}
-                className="bg-[#0f766e] hover:bg-[#0d5e59] text-white rounded-full px-8 py-3"
+            existingSubscription ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="text-center py-12"
               >
-                Back to Home
-              </Button>
-            </motion.div>
+                <div className="w-20 h-20 bg-[#0f766e] rounded-full flex items-center justify-center mx-auto mb-6">
+                  <CheckCircle className="w-10 h-10 text-white" />
+                </div>
+                <h2 className="text-3xl font-bold text-[#0f766e] mb-4" style={{ fontFamily: '"Playfair Display", serif' }}>
+                  Welcome Back!
+                </h2>
+                <p className="text-lg text-slate-600 mb-2">
+                  You're already subscribed to our newsletter with:
+                </p>
+                <div className="bg-white p-4 rounded-lg inline-block mb-6 shadow-sm">
+                  <p className="font-semibold text-[#0f766e]">{existingSubscription.email}</p>
+                  {existingSubscription.name && (
+                    <p className="text-slate-600">{existingSubscription.name}</p>
+                  )}
+                </div>
+                <p className="text-lg text-slate-600 mb-8">
+                  You're all set to receive valuable health insights and wellness tips from Dr. Bushra Mirza.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Button
+                    onClick={() => {
+                      setIsEditing(true);
+                      setIsSubscribed(false);
+                      setEmail(existingSubscription.email || '');
+                      setName(existingSubscription.name || '');
+                    }}
+                    className="bg-[#0f766e] hover:bg-[#0d5e59] text-white rounded-full px-8 py-3"
+                  >
+                    Update My Details
+                  </Button>
+                  <Button
+                    onClick={() => (window.location.href = '/')}
+                    className="bg-white hover:bg-slate-50 text-[#0f766e] border border-[#0f766e] rounded-full px-8 py-3"
+                  >
+                    Back to Home
+                  </Button>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="text-center py-12"
+              >
+                <div className="w-20 h-20 bg-[#0f766e] rounded-full flex items-center justify-center mx-auto mb-6">
+                  <CheckCircle className="w-10 h-10 text-white" />
+                </div>
+                <h2 className="text-3xl font-bold text-[#0f766e] mb-4" style={{ fontFamily: '"Playfair Display", serif' }}>
+                  Thank You for Subscribing!
+                </h2>
+                <p className="text-lg text-slate-600 mb-8">
+                  You've successfully subscribed to HygieneShelf newsletter.
+                  Get ready to receive valuable health insights and wellness tips from Dr. Bushra Mirza.
+                </p>
+                <Button
+                  onClick={() => (window.location.href = '/')}
+                  className="bg-[#0f766e] hover:bg-[#0d5e59] text-white rounded-full px-8 py-3"
+                >
+                  Back to Home
+                </Button>
+              </motion.div>
+            )
           ) : (
             <motion.div
               variants={fadeInUp}
@@ -156,10 +324,10 @@ export default function NewsletterPage() {
                   <Mail className="w-8 h-8 text-white" />
                 </div>
                 <h2 className="text-2xl md:text-3xl font-bold text-[#0f766e] mb-2" style={{ fontFamily: '"Playfair Display", serif' }}>
-                  Subscribe to Our Newsletter
+                  {isEditing ? 'Update Your Subscription' : 'Subscribe to Our Newsletter'}
                 </h2>
                 <p className="text-slate-600">
-                  Join our community and never miss important health updates
+                  {isEditing ? 'Update your newsletter preferences' : 'Join our community and never miss important health updates'}
                 </p>
               </div>
 
@@ -206,6 +374,27 @@ export default function NewsletterPage() {
                   </motion.div>
                 )}
 
+                {emailExists && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-4 rounded-lg bg-blue-50 border border-blue-200 text-blue-800 flex items-center gap-3"
+                  >
+                    <AlertCircle className="w-5 h-5" />
+                    <span>This email is already subscribed to our newsletter!</span>
+                  </motion.div>
+                )}
+
+                {isCheckingEmail && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-4 rounded-lg bg-yellow-50 border border-yellow-200 text-yellow-800 flex items-center gap-3"
+                  >
+                    <span className="animate-pulse">Checking email...</span>
+                  </motion.div>
+                )}
+
                 <div className="pt-4">
                   <Button
                     type="submit"
@@ -214,10 +403,10 @@ export default function NewsletterPage() {
                   >
                     {isSubmitting ? (
                       <>
-                        <span className="animate-pulse">Subscribing...</span>
+                        <span className="animate-pulse">{isEditing ? 'Updating...' : 'Subscribing...'}</span>
                       </>
                     ) : (
-                      'Subscribe Now'
+                      isEditing ? 'Update Subscription' : 'Subscribe Now'
                     )}
                   </Button>
                 </div>

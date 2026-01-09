@@ -63,6 +63,17 @@ export function UserProvider({ children }: UserProviderProps) {
     });
   };
 
+  // Store user ID in multiple localStorage keys for compatibility
+  const storeUserId = (userId: string) => {
+    localStorage.setItem('unique_user_id', userId);
+    localStorage.setItem('userId', userId);
+  };
+
+  // Get user ID from multiple possible storage keys
+  const getUserId = (): string | null => {
+    return localStorage.getItem('unique_user_id') || localStorage.getItem('userId');
+  };
+
   const updateUser = (username: string, email: string) => {
     // Check if user already exists, preserve their UUID
     const existingUserId = user?.uniqueUserId || generateUUID();

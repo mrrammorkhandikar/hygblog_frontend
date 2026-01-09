@@ -22,7 +22,9 @@ import {
   Image as ImageIcon,
   Users2,
   Package,
-  Briefcase
+  Briefcase,
+  Mail,
+  BarChart3
 } from "lucide-react";
 
 const navigation = [
@@ -31,11 +33,14 @@ const navigation = [
 ];
 
 const adminNavigation = [
+  { name: 'Project Analysis', href: '/admin/project-analysis', icon: BarChart3 },
   { name: 'Categories', href: '/admin/categories', icon: FolderOpen },
   { name: 'Tags', href: '/admin/tags', icon: Tags },
   { name: 'Authors', href: '/admin/authors', icon: Users },
   { name: 'Teams', href: '/admin/teams', icon: Users2 },
   { name: 'Products', href: '/admin/products', icon: Package },
+  { name: 'Email Manager', href: '/admin/email-manager', icon: Mail },
+  { name: 'Email List', href: '/admin/email-list', icon: Mail },
   { name: 'Contact Messages', href: '/admin/contact-messages', icon: Settings },
   { name: 'Job Applications', href: '/admin/job-applications', icon: Briefcase }
 ];
@@ -131,28 +136,28 @@ export default function AdminLayout({
           ))}
         </div>
 
-        {userRole === 'admin' && (
-          <>
-            <Separator className="my-4" />
-            <div className="space-y-1">
-              {adminNavigation.map((item) => (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={`flex items-center space-x-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                    pathname === item.href
-                      ? 'bg-accent text-accent-foreground'
-                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                  }`}
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <item.icon className="w-4 h-4" />
-                  <span>{item.name}</span>
-                </Link>
-              ))}
-            </div>
-          </>
-        )}
+  {userRole === 'admin' && (
+    <>
+      <Separator className="my-4" />
+      <div className="space-y-1">
+        {adminNavigation.map((item) => (
+          <Link
+            key={item.name}
+            href={item.href}
+            className={`flex items-center space-x-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+              pathname === item.href
+                ? 'bg-accent text-accent-foreground'
+                : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+            }`}
+            onClick={() => setSidebarOpen(false)}
+          >
+            <item.icon className="w-4 h-4" />
+            <span>{item.name}</span>
+          </Link>
+        ))}
+      </div>
+    </>
+  )}
 
         <Separator className="my-4" />
         <div className="space-y-1">
