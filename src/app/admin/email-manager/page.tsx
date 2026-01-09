@@ -33,6 +33,7 @@ type Email = {
   the_mail: {
     subject: string;
     html: string;
+    design?: string;
   };
   status: 'Draft' | 'Scheduled' | 'Sent';
   emails: {
@@ -52,11 +53,14 @@ type EmailFormData = {
   type: string;
   subject: string;
   html: string;
+  design: string;
   recipients: string;
   scheduled_time: string;
   is_scheduled: boolean;
-  template: string;
 };
+
+
+
 
 type EmailTemplate = {
   id: string;
@@ -83,16 +87,17 @@ export default function EmailManagerPage() {
   const [showForm, setShowForm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingEmail, setEditingEmail] = useState<Email | null>(null);
-  const [formData, setFormData] = useState<EmailFormData>({
-    title: '',
-    type: 'Newsletter',
-    subject: '',
-    html: '',
-    recipients: '',
-    scheduled_time: '',
-    is_scheduled: false,
-    template: 'none'
-  });
+const [formData, setFormData] = useState<EmailFormData>({
+  title: '',
+  type: 'Newsletter',
+  subject: '',
+  html: '',
+  design: '',
+  recipients: '',
+  scheduled_time: '',
+  is_scheduled: false
+});
+
   const [formLoading, setFormLoading] = useState(false);
   const [previewHtml, setPreviewHtml] = useState(false);
   
@@ -741,7 +746,7 @@ export default function EmailManagerPage() {
     }
   }, [token]);
 
-  // Load subscriber emails
+  // Load ALL subscriber emails (replace existing recipients)
   const loadSubscriberEmails = async () => {
     if (!token) return;
 
@@ -751,10 +756,10 @@ export default function EmailManagerPage() {
 
       setFormData(prev => ({
         ...prev,
-        recipients: prev.recipients ? prev.recipients + '\n' + subscriberEmails : subscriberEmails
+        recipients: subscriberEmails
       }));
 
-      alert(`Loaded ${response.count} subscriber emails`);
+      alert(`Loaded all ${response.count} subscriber emails (replaced existing recipients)`);
     } catch (err: any) {
       console.error('Failed to load subscriber emails:', err);
       alert('Failed to load subscriber emails. Please try again.');
@@ -772,31 +777,35 @@ export default function EmailManagerPage() {
   }, [debouncedSearchTerm, statusFilter, typeFilter]);
 
   // Update form data when editingEmail changes
-  useEffect(() => {
-    if (isEditing && editingEmail) {
-      setFormData({
-        title: editingEmail.title,
-        type: editingEmail.type,
-        subject: editingEmail.the_mail.subject,
-        html: editingEmail.the_mail.html,
-        recipients: editingEmail.emails?.list.map(r => r.email).join('\n') || '',
-        scheduled_time: editingEmail.scheduled_time || '',
-        is_scheduled: !!editingEmail.scheduled_time,
-        template: 'none'
-      });
-    } else if (!isEditing) {
-      setFormData({
-        title: '',
-        type: 'Newsletter',
-        subject: '',
-        html: '',
-        recipients: '',
-        scheduled_time: '',
-        is_scheduled: false,
-        template: 'none'
-      });
-    }
-  }, [isEditing, editingEmail]);
+// ✅ Update form data when editingEmail changes
+useEffect(() => {
+  if (isEditing && editingEmail) {
+    setFormData({
+      title: editingEmail.title,
+      type: editingEmail.type,
+      subject: editingEmail.the_mail.subject,
+      html: editingEmail.the_mail.html || '',
+      design: editingEmail.the_mail.design || '', // ✅ IMPORTANT
+      recipients: editingEmail.emails?.list.map(r => r.email).join('\n') || '',
+      scheduled_time: editingEmail.scheduled_time || '',
+      is_scheduled: Boolean(editingEmail.scheduled_time),
+      
+    });
+  } else {
+    // ✅ RESET FORM FOR CREATE MODE
+    ({
+  title: '',
+  type: 'Newsletter',
+  subject: '',
+  html: '',
+  design: '',
+  recipients: '',
+  scheduled_time: '',
+  is_scheduled: false
+});
+  }
+}, [isEditing, editingEmail]);
+
 
   // Enhanced form validation functions
   const validateField = (name: string, value: string): string => {
@@ -845,10 +854,17 @@ export default function EmailManagerPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleFieldChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
+  const handleFieldChange = (name: string, value: string | boolean) => {
+    setFormData(prev => {
+      const newData = { ...prev, [name]: value };
+
+      // When scheduling is enabled/disabled, the status will be handled in the form submission
+      // No need to change type anymore - status will be set to "Scheduled" when is_scheduled is true
+
+      return newData;
+    });
     setTouched(prev => ({ ...prev, [name]: true }));
-    
+
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
@@ -984,37 +1000,43 @@ export default function EmailManagerPage() {
     return () => clearTimeout(timer);
   }, [formData.title, formData.subject, subjectSuggestions.length]);
 
-  const handleCreate = () => {
-    setIsEditing(false);
-    setEditingEmail(null);
-    setFormData({
-      title: '',
-      type: 'Newsletter',
-      subject: '',
-      html: '',
-      recipients: '',
-      scheduled_time: '',
-      is_scheduled: false,
-      template: 'none'
-    });
-    setShowForm(true);
-  };
+const handleCreate = () => {
+  setIsEditing(false);
+  setEditingEmail(null);
 
-  const handleEdit = (email: Email) => {
-    setIsEditing(true);
-    setEditingEmail(email);
-    setFormData({
-      title: email.title,
-      type: email.type,
-      subject: email.the_mail.subject,
-      html: email.the_mail.html,
-      recipients: email.emails?.list.map(r => r.email).join('\n') || '',
-      scheduled_time: email.scheduled_time || '',
-      is_scheduled: !!email.scheduled_time,
-      template: 'none'
-    });
-    setShowForm(true);
-  };
+ ({
+  title: '',
+  type: 'Newsletter',
+  subject: '',
+  html: '',
+  design: '',
+  recipients: '',
+  scheduled_time: '',
+  is_scheduled: false
+});
+
+  setShowForm(true);
+};
+
+const handleEdit = (email: Email) => {
+  setIsEditing(true);
+  setEditingEmail(email);
+
+  setFormData({
+    title: email.title,
+    type: email.type,
+    subject: email.the_mail.subject,
+    html: email.the_mail.html || '',
+    design: email.the_mail.design || '', // ✅ REQUIRED
+    recipients: email.emails?.list.map(r => r.email).join('\n') || '',
+    scheduled_time: email.scheduled_time || '',
+    is_scheduled: Boolean(email.scheduled_time),
+
+  });
+
+  setShowForm(true);
+};
+
 
   const handleDelete = async (id: string, title: string) => {
     if (!confirm(`Are you sure you want to delete email "${title}"?`)) return;
@@ -1042,84 +1064,98 @@ export default function EmailManagerPage() {
     }
   };
 
-  const handleFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFormLoading(true);
+const handleFormSubmit = async (data: EmailFormData) => {
+  setFormLoading(true);
 
-    try {
-      // Debug: Log current form data
-      console.log('Form submission - current formData.recipients:', formData.recipients);
+  try {
+    /* ===============================
+       PARSE & VALIDATE RECIPIENTS
+    =============================== */
+    const rawRecipients = data.recipients
+      .split('\n')
+      .map(email => email.trim())
+      .filter(Boolean);
 
-      // Parse recipients
-      const rawRecipients = formData.recipients
-        .split('\n')
-        .map(email => email.trim())
-        .filter(email => email.length > 0);
+    const recipientsList = rawRecipients
+      .filter(email => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+      .map(email => ({ email }));
 
-      console.log('Parsed rawRecipients:', rawRecipients);
-
-      // Filter for valid email addresses
-      const recipientsList = rawRecipients
-        .filter(email => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-        .map(email => ({ email }));
-
-      // Check if we have valid recipients after filtering
-      if (!isEditing && recipientsList.length === 0 && rawRecipients.length > 0) {
-        throw new Error('Please provide at least one valid email address. All entered email addresses appear to be invalid.');
-      }
-
-      // Validate email type before sending to API
-      const validTypes = ['Welcome', 'New Post', 'Newsletter', 'Template', 'Other'];
-      if (!validTypes.includes(formData.type)) {
-        throw new Error(`Invalid email type: ${formData.type}. Valid types are: ${validTypes.join(', ')}`);
-      }
-
-      // Ensure HTML content is available (should be exported by EmailForm component)
-      if (!formData.html || formData.html.trim().length === 0) {
-        throw new Error('Email content is required. Please make sure to create content in the email editor.');
-      }
-
-      const emailData = {
-        title: formData.title.trim(),
-        type: formData.type,
-        the_mail: {
-          subject: formData.subject.trim(),
-          html: formData.html
-        },
-        emails: recipientsList.length > 0 ? {
-          count: recipientsList.length,
-          list: recipientsList
-        } : null,
-        scheduled_time: formData.is_scheduled ? formData.scheduled_time : null
-      };
-
-      if (isEditing && editingEmail) {
-        await apiPut(`/email-manager/${editingEmail.id}`, token, emailData);
-        alert('Email updated successfully!');
-      } else {
-        await apiPost('/email-manager', token, emailData);
-        alert('Email created successfully!');
-      }
-
-      setShowForm(false);
-      setFormData({
-        title: '',
-        type: 'Newsletter',
-        subject: '',
-        html: '',
-        recipients: '',
-        scheduled_time: '',
-        is_scheduled: false,
-        template: 'none'
-      });
-      await loadEmails();
-    } catch (err: any) {
-      console.error('Form submit failed:', err);
-      alert(err.message || "Failed to save email. Please try again.");
-    } finally {
-      setFormLoading(false);
+    if (!isEditing && recipientsList.length === 0) {
+      throw new Error('Please provide at least one valid recipient email address.');
     }
-  };
+
+    /* ===============================
+       VALIDATE EMAIL TYPE
+    =============================== */
+    const validTypes = ['Welcome', 'New Post', 'Newsletter', 'Template', 'Other'];
+    if (!validTypes.includes(data.type)) {
+      throw new Error(`Invalid email type: ${data.type}`);
+    }
+
+    /* ===============================
+       VALIDATE CONTENT
+    =============================== */
+    if (!data.html || !data.design) {
+      throw new Error('Email content is missing. Please design the email.');
+    }
+
+    /* ===============================
+       BUILD API PAYLOAD
+    =============================== */
+    const emailPayload = {
+      title: data.title.trim(),
+      type: data.type,
+      the_mail: {
+        subject: data.subject.trim(),
+        html: data.html,
+        design: data.design // ✅ REQUIRED
+      },
+      emails: recipientsList.length
+        ? {
+            count: recipientsList.length,
+            list: recipientsList
+          }
+        : null,
+      scheduled_time: data.is_scheduled
+        ? new Date(data.scheduled_time).toISOString()
+        : null
+    };
+
+    /* ===============================
+       CREATE / UPDATE
+    =============================== */
+    if (isEditing && editingEmail) {
+      await apiPut(`/email-manager/${editingEmail.id}`, token, emailPayload);
+      alert('Email updated successfully!');
+    } else {
+      await apiPost('/email-manager', token, emailPayload);
+      alert('Email created successfully!');
+    }
+
+    /* ===============================
+       RESET STATE
+    =============================== */
+    setShowForm(false);
+    ({
+  title: '',
+  type: 'Newsletter',
+  subject: '',
+  html: '',
+  design: '',
+  recipients: '',
+  scheduled_time: '',
+  is_scheduled: false
+});
+
+    await loadEmails();
+  } catch (err: any) {
+    console.error('Form submit failed:', err);
+    alert(err.message || 'Failed to save email. Please try again.');
+  } finally {
+    setFormLoading(false);
+  }
+};
+
 
   const formatDate = (dateString: string) => {
     try {
@@ -1329,32 +1365,39 @@ export default function EmailManagerPage() {
           </CardHeader>
           <CardContent>
             <EmailForm
-              isEditing={isEditing}
-              formData={formData}
-              errors={errors}
-              touched={touched}
-              formLoading={formLoading}
-              previewHtml={previewHtml}
-              
-              onFieldChange={handleFieldChange}
-              
-              onPreviewToggle={() => setPreviewHtml(!previewHtml)}
-              onFormSubmit={handleFormSubmit}
-              onCancel={() => {
-                setShowForm(false);
-                setFormData({
-                  title: '',
-                  type: 'Newsletter',
-                  subject: '',
-                  html: '',
-                  recipients: '',
-                  scheduled_time: '',
-                  is_scheduled: false,
-                  template: 'none'
-                });
-              }}
-              onLoadSubscribers={loadSubscriberEmails}
-            />
+  isEditing={isEditing}
+  formData={formData}
+  errors={errors}
+  touched={touched}
+  formLoading={formLoading}
+  previewHtml={previewHtml}
+
+  onFieldChange={handleFieldChange}
+
+  onPreviewToggle={() => setPreviewHtml(!previewHtml)}
+
+  onFormSubmit={handleFormSubmit}
+
+  onCancel={() => {
+    setShowForm(false);
+    setIsEditing(false);
+    setEditingEmail(null);
+
+    ({
+  title: '',
+  type: 'Newsletter',
+  subject: '',
+  html: '',
+  design: '',
+  recipients: '',
+  scheduled_time: '',
+  is_scheduled: false
+});
+  }}
+
+  onLoadSubscribers={loadSubscriberEmails}
+/>
+
           </CardContent>
         </Card>
       )}
@@ -1526,4 +1569,4 @@ export default function EmailManagerPage() {
       )}
     </div>
   );
-}
+}            
