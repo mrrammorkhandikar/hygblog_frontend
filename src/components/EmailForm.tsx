@@ -51,7 +51,11 @@ const EmailFormWithVisualEditor: React.FC<Props> = ({
 
   const isScheduleInvalid = useMemo(() => {
     if (!formData.scheduled_time) return false;
-    return new Date(formData.scheduled_time) <= new Date();
+    // Convert the selected time to UTC (subtract 5.5 hours) and check if it's in the future
+    const localDateTime = new Date(formData.scheduled_time);
+    const offsetMs = 5.5 * 60 * 60 * 1000; // 5.5 hours in milliseconds
+    const utcDateTime = new Date(localDateTime.getTime() - offsetMs);
+    return utcDateTime <= new Date();
   }, [formData.scheduled_time]);
 
   // Parse recipients into array for better management
