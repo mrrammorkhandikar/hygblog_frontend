@@ -114,9 +114,14 @@ const EmailFormWithVisualEditor: React.FC<Props> = ({
 
     const exportedHtml = await htmlPromise;
 
-    // Store scheduled_time directly as selected by user (backend expects local timezone)
+    // Convert scheduled_time from Asia/Calcutta (UTC+5.5) to UTC before storing
     if (formData.is_scheduled && formData.scheduled_time) {
-      onFieldChange('scheduled_time', formData.scheduled_time);
+      const localDateTime = new Date(formData.scheduled_time);
+      // Subtract 5.5 hours to convert from Asia/Calcutta (UTC+5.5) to UTC
+      const offsetMs = 5.5 * 60 * 60 * 1000; // 5.5 hours in milliseconds
+      const utcDateTime = new Date(localDateTime.getTime() - offsetMs);
+      const utcISOString = utcDateTime.toISOString();
+      onFieldChange('scheduled_time', utcISOString);
     }
 
     // Call parent submit handler with exported HTML
