@@ -395,16 +395,17 @@ const EmailFormWithVisualEditor: React.FC<Props> = ({
                 <span className="text-xs text-gray-500">(Future dates only)</span>
               </Label>
               <div className="relative">
-              <input
-                type="datetime-local"
-                value={formData.scheduled_time}
-                onChange={(e) => onFieldChange('scheduled_time', e.target.value)}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 text-black ${
-                  isScheduleInvalid
-                    ? 'border-red-300 focus:ring-red-500 bg-red-50'
-                    : 'border-gray-300 focus:ring-teal-500'
-                }`}
-              />
+                <input
+                  type="datetime-local"
+                  value={formData.scheduled_time}
+                  onChange={(e) => onFieldChange('scheduled_time', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 text-black ${
+                    isScheduleInvalid
+                      ? 'border-red-300 focus:ring-red-500 bg-red-50'
+                      : 'border-gray-300 focus:ring-teal-500'
+                  }`}
+                  required={formData.is_scheduled}
+                />
                 <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
                   🕐
                 </div>
