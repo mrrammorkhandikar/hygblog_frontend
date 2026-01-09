@@ -120,10 +120,15 @@ const EmailFormWithVisualEditor: React.FC<Props> = ({
 
     // Subtract 5.5 hours from the selected date and time
     if (formData.is_scheduled && formData.scheduled_time) {
+      console.log('Original scheduled_time from form:', formData.scheduled_time);
       const localDateTime = new Date(formData.scheduled_time);
+      console.log('Parsed local date time:', localDateTime);
       const offsetMs = 5.5 * 60 * 60 * 1000; // 5.5 hours in milliseconds
+      console.log('Offset in milliseconds:', offsetMs);
       const adjustedDateTime = new Date(localDateTime.getTime() - offsetMs);
+      console.log('Adjusted date time (after subtracting 5.5 hours):', adjustedDateTime);
       const adjustedISOString = adjustedDateTime.toISOString();
+      console.log('Final ISO string being sent to backend:', adjustedISOString);
       onFieldChange('scheduled_time', adjustedISOString);
     }
 
