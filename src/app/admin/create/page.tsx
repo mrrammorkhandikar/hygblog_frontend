@@ -611,16 +611,9 @@ export default function CreatePost() {
 
         // Handle scheduled publishing
         if (schedulePublish && scheduledDateTime) {
-          // Convert datetime-local input to PostgreSQL timestamp format: YYYY-MM-DD HH:mm:ss+00
-          const localDateTime = new Date(scheduledDateTime + ':00'); // Add seconds if missing
-          const year = localDateTime.getFullYear();
-          const month = String(localDateTime.getMonth() + 1).padStart(2, '0');
-          const day = String(localDateTime.getDate()).padStart(2, '0');
-          const hours = String(localDateTime.getHours()).padStart(2, '0');
-          const minutes = String(localDateTime.getMinutes()).padStart(2, '0');
-          const seconds = String(localDateTime.getSeconds()).padStart(2, '0');
-
-          postData.shedule_publish = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}+00`;
+          // Convert datetime-local input (local time) to UTC ISO string
+          const localDateTime = new Date(scheduledDateTime);
+          postData.shedule_publish = localDateTime.toISOString();
         }
       }
 

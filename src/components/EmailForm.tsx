@@ -114,6 +114,13 @@ const EmailFormWithVisualEditor: React.FC<Props> = ({
 
     const exportedHtml = await htmlPromise;
 
+    // Convert scheduled_time to UTC ISO string if present
+    if (formData.is_scheduled && formData.scheduled_time) {
+      const localDateTime = new Date(formData.scheduled_time);
+      const utcISOString = localDateTime.toISOString();
+      onFieldChange('scheduled_time', utcISOString);
+    }
+
     // Call parent submit handler with exported HTML
     await onFormSubmit(e);
   };
