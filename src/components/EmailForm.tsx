@@ -386,7 +386,7 @@ const EmailFormWithVisualEditor: React.FC<Props> = ({
                 <span className="text-xs text-gray-500">(Future dates only)</span>
               </Label>
               <div className="relative">
-                <Input
+              <Input
                   type="datetime-local"
                   value={formData.scheduled_time}
                   onChange={(e) => onFieldChange('scheduled_time', e.target.value)}
@@ -395,7 +395,15 @@ const EmailFormWithVisualEditor: React.FC<Props> = ({
                       ? 'border-red-300 focus:ring-red-500 bg-red-50'
                       : 'border-gray-300 focus:ring-teal-500'
                   }`}
-                  min={new Date().toISOString().slice(0, 16)}
+                  min={(() => {
+                    const now = new Date();
+                    const year = now.getFullYear();
+                    const month = String(now.getMonth() + 1).padStart(2, '0');
+                    const day = String(now.getDate()).padStart(2, '0');
+                    const hours = String(now.getHours()).padStart(2, '0');
+                    const minutes = String(now.getMinutes()).padStart(2, '0');
+                    return `${year}-${month}-${day}T${hours}:${minutes}`;
+                  })()}
                 />
                 <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
                   🕐

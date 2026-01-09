@@ -784,7 +784,15 @@ export default function CreatePost() {
                             type="datetime-local"
                             value={scheduledDateTime}
                             onChange={(e) => setScheduledDateTime(e.target.value)}
-                            min={new Date().toISOString().slice(0, 16)}
+                            min={(() => {
+                              const now = new Date();
+                              const year = now.getFullYear();
+                              const month = String(now.getMonth() + 1).padStart(2, '0');
+                              const day = String(now.getDate()).padStart(2, '0');
+                              const hours = String(now.getHours()).padStart(2, '0');
+                              const minutes = String(now.getMinutes()).padStart(2, '0');
+                              return `${year}-${month}-${day}T${hours}:${minutes}`;
+                            })()}
                             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 text-black ${
                               isScheduleInvalid
                                 ? 'border-red-300 focus:ring-red-500 bg-red-50'
