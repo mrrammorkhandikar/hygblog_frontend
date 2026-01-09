@@ -8,14 +8,21 @@ export default function UniqueUserDemoPage() {
   const [userDetails, setUserDetails] = useState<any>(null);
   const [subscriptionStatus, setSubscriptionStatus] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
+  const [storageValues, setStorageValues] = useState({
+    blogUser: '',
+    unique_user_id: '',
+    userId: ''
+  });
 
   // Simulate what happens when user visits newsletter page
   const simulateNewsletterVisit = async () => {
+    if (typeof window === 'undefined') return;
+
     setIsLoading(true);
-    
+
     try {
       // Step 1: Try to find user ID from various storage locations
-      const userIdFromStorage = localStorage.getItem('userId') || 
+      const userIdFromStorage = localStorage.getItem('userId') ||
                                localStorage.getItem('unique_user_id');
       
       if (userIdFromStorage) {
@@ -59,9 +66,22 @@ export default function UniqueUserDemoPage() {
     }
   };
 
+  // Load storage values on client side
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setStorageValues({
+        blogUser: localStorage.getItem('blogUser') || 'Not found',
+        unique_user_id: localStorage.getItem('unique_user_id') || 'Not found',
+        userId: localStorage.getItem('userId') || 'Not found'
+      });
+    }
+  }, []);
+
   // Auto-run demo when page loads
   useEffect(() => {
-    simulateNewsletterVisit();
+    if (typeof window !== 'undefined') {
+      simulateNewsletterVisit();
+    }
   }, []);
 
   const generateSampleUUID = () => {
@@ -75,17 +95,26 @@ export default function UniqueUserDemoPage() {
   };
 
   const simulateUserRegistration = () => {
+    if (typeof window === 'undefined') return;
+
     const sampleUser = {
       uniqueUserId: generateSampleUUID(),
       username: 'John Doe',
       email: 'john.doe@example.com',
       isRegistered: true
     };
-    
+
     localStorage.setItem('blogUser', JSON.stringify(sampleUser));
     localStorage.setItem('unique_user_id', sampleUser.uniqueUserId);
     localStorage.setItem('userId', sampleUser.uniqueUserId);
-    
+
+    // Update storage values state
+    setStorageValues({
+      blogUser: JSON.stringify(sampleUser),
+      unique_user_id: sampleUser.uniqueUserId,
+      userId: sampleUser.uniqueUserId
+    });
+
     setUserDetails(sampleUser);
     setUserId(sampleUser.uniqueUserId);
     setSubscriptionStatus('User registered - ready to check subscription');
@@ -104,9 +133,9 @@ export default function UniqueUserDemoPage() {
             <div className="bg-gray-50 p-4 rounded-lg">
               <h3 className="font-medium text-gray-900">Storage Locations:</h3>
               <div className="mt-2 space-y-2 text-sm">
-                <div>blogUser: {localStorage.getItem('blogUser') || 'Not found'}</div>
-                <div>unique_user_id: {localStorage.getItem('unique_user_id') || 'Not found'}</div>
-                <div>userId: {localStorage.getItem('userId') || 'Not found'}</div>
+                <div>blogUser: {storageValues.blogUser}</div>
+                <div>unique_user_id: {storageValues.unique_user_id}</div>
+                <div>userId: {storageValues.userId}</div>
               </div>
             </div>
             
