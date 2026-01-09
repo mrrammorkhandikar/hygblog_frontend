@@ -114,9 +114,13 @@ const EmailFormWithVisualEditor: React.FC<Props> = ({
 
     const exportedHtml = await htmlPromise;
 
-    // Store scheduled_time directly as selected by user
+    // Subtract 5.5 hours from the selected date and time
     if (formData.is_scheduled && formData.scheduled_time) {
-      onFieldChange('scheduled_time', formData.scheduled_time);
+      const localDateTime = new Date(formData.scheduled_time);
+      const offsetMs = 5.5 * 60 * 60 * 1000; // 5.5 hours in milliseconds
+      const adjustedDateTime = new Date(localDateTime.getTime() - offsetMs);
+      const adjustedISOString = adjustedDateTime.toISOString();
+      onFieldChange('scheduled_time', adjustedISOString);
     }
 
     // Call parent submit handler with exported HTML
