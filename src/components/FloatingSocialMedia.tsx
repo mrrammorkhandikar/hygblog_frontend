@@ -16,7 +16,7 @@ export default function FloatingSocialMedia() {
 
       {/* Instagram */}
       <a
-        href="https://www.instagram.com/hygiene.shelf?igsh=MTF5NGx5dDZyd3Zzaw%3D%3D"
+        href="https://www.instagram.com/dr.bushra.s/"
         target="_blank"
         rel="noopener noreferrer"
         className="w-12 h-12 bg-[#06b6d4] hover:bg-[#0891b2] text-white rounded-full flex items-center justify-center shadow-lg transition-all duration-300 hover:scale-110"

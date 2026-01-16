@@ -1284,7 +1284,7 @@ const getContextFromForm = (): LLMSuggestionContext & { content?: string } => {
                                         value={nested.content}
                                         onChange={(e) => updateListItem(block.id, nested.id, { content: e.target.value }, item.id)}
                                         rows={1}
-                                        className="w-full text-sm mt-1 px-2 py-1 border rounded"
+                                        className="w-full text-sm mt-1 px-2 py-1 border rounded text-black placeholder-gray-500"
                                       />
                                     </div>
                                   ))}

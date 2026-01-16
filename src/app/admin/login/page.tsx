@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import { AlertCircle } from 'lucide-react';
+import ForgotPasswordDialog from './ForgotPasswordDialog';
 
 export default function AdminLogin() {
   const [username, setUsername] = useState('');
@@ -16,6 +17,7 @@ export default function AdminLogin() {
   const [role, setRole] = useState<'admin' | 'author'>('admin');
   const [err, setErr] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent) {
@@ -102,7 +104,23 @@ export default function AdminLogin() {
             >
               {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
+
+            {role === 'admin' && (
+              <Button
+                type="button"
+                variant="link"
+                className="w-full text-sm"
+                onClick={() => setShowForgotPassword(true)}
+              >
+                Forgot Password?
+              </Button>
+            )}
           </form>
+
+          <ForgotPasswordDialog
+            open={showForgotPassword}
+            onOpenChange={setShowForgotPassword}
+          />
         </CardContent>
       </Card>
     </div>

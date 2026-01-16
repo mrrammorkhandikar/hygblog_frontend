@@ -44,9 +44,10 @@ type Post = {
   featured?: boolean;
   category?: string;
   tags?: string[];
+  shedule_publish?: string | null;
 };
 
-type SortField = 'title' | 'published' | 'updated_at' | 'created_at';
+type SortField = 'title' | 'published' | 'updated_at' | 'created_at' | 'scheduled';
 type SortDirection = 'asc' | 'desc';
 
 // My Profile Component
@@ -538,6 +539,7 @@ export default function AdminDashboard() {
               <option value="">All Status</option>
               <option value="true">Published</option>
               <option value="false">Draft</option>
+              <option value="scheduled">Scheduled</option>
             </select>
           </div>
 
@@ -616,6 +618,15 @@ export default function AdminDashboard() {
                   </th>
                   <th
                     className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    onClick={() => handleSort('scheduled')}
+                  >
+                    <div className="flex items-center space-x-1">
+                      <span>Scheduled Date</span>
+                      <SortIcon field="scheduled" />
+                    </div>
+                  </th>
+                  <th
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort('updated_at')}
                   >
                     <div className="flex items-center space-x-1">
@@ -631,7 +642,7 @@ export default function AdminDashboard() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {posts.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                    <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
                       No posts found. {debouncedSearchTerm || categoryFilter || publishedFilter ? 'Try adjusting your filters.' : 'Create your first post!'}
                     </td>
                   </tr>
@@ -685,13 +696,23 @@ export default function AdminDashboard() {
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                           post.published
                             ? 'bg-green-100 text-green-800'
+                            : post.shedule_publish && new Date(post.shedule_publish) > new Date()
+                            ? 'bg-blue-100 text-blue-800'
                             : 'bg-gray-100 text-gray-800'
                         }`}>
-                          {post.published ? 'Published' : 'Draft'}
+                          {post.published
+                            ? 'Published'
+                            : post.shedule_publish && new Date(post.shedule_publish) > new Date()
+                            ? 'Scheduled'
+                            : 'Draft'
+                          }
                         </span>
                       </td>
                       <td className="px-4 py-4 text-sm text-gray-900">
                         {post.author || '-'}
+                      </td>
+                      <td className="px-4 py-4 text-sm text-gray-500">
+                        {post.shedule_publish ? formatDate(post.shedule_publish) : '-'}
                       </td>
                       <td className="px-4 py-4 text-sm text-gray-500">
                         {formatDate(post.updated_at)}
