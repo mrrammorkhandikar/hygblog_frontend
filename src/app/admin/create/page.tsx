@@ -1456,7 +1456,7 @@ export default function CreatePost() {
 
                           const ListTag = type;
                           return (
-                            <ListTag key={block.id} className="mb-8 pl-6 list-disc text-black">
+                            <ListTag key={block.id} className={`mb-8 pl-6 text-black ${type === 'ul' ? 'list-disc' : 'list-decimal'}`}>
                               {(listItems || []).map((item) => renderListItem(item))}
                             </ListTag>
                           );

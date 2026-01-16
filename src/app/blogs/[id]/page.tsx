@@ -220,7 +220,11 @@ export default function BlogDetail({ params }: { params: Promise<{ id: string }>
           case 'ol':
             const ListTag = type;
             return (
-              <ListTag key={block.id} className="mb-8 pl-6 list-disc">
+              <ListTag
+                key={block.id}
+                className="mb-8 pl-6"
+                style={{ listStyleType: type === 'ul' ? 'disc' : 'decimal' }}
+              >
                 {listItems?.map((item) => (
                   <li key={item.id} className="mb-2">
                     {item.type === 'text' ? (
