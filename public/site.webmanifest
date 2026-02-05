@@ -1,0 +1,21 @@
+{
+  "name": "Hygiene Shelf - Health & Hygiene Insights",
+  "short_name": "Hygiene Shelf",
+  "description": "Discover evidence-based health and hygiene articles, practical tips, and expert guidance from Dr. Bushra Mirza",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f7fdff",
+  "theme_color": "#0f766e",
+  "icons": [
+    {
+      "src": "/Images/thelogohytitle.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/Images/thelogohytitle.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

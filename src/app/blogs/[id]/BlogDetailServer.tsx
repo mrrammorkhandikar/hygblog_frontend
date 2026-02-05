@@ -1,16 +1,11 @@
-"use client";
-
 import { notFound } from 'next/navigation';
-import React, { useEffect, useState } from 'react';
+import { fetchBlogPost } from './actions';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, ArrowLeft, Share2, Bookmark } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CategoriesBox from '@/components/CategoriesBox';
 import GoogleAdsBox from '@/components/GoogleAdsBox';
 import EngagementSection from '@/components/EngagementSection';
-import { fetchBlogPost } from './actions';
-import { apiGet } from '@/app/admin/api';
-
 
 type Blog = {
   id: string;
@@ -55,99 +50,104 @@ type ListItem = {
   nestedList?: { type: 'ul' | 'ol'; items: ListItem[] };
 };
 
-// Parse text formatting for display
-function parseFormattedText(text: string): string {
-  if (!text) return '';
-
-  // Convert markdown-style formatting to HTML
-  let formatted = text;
-
-  // Bold: **text** -> <strong>text</strong>
-  formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-
-  // Italic: *text* -> <em>text</em>
-  formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
-
-  // Underline: <u>text</u> -> <u>text</u> (already HTML)
-  // Note: This is already HTML so it will be rendered
-
-  return formatted;
+async function getRelatedBlogs(currentSlug: string) {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/posts?published=true&limit=10&sortBy=date&sortOrder=desc`);
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch related blogs');
+    }
+    
+    const result = await response.json();
+    const allBlogs = Array.isArray(result.data) ? result.data : [];
+    
+    // Filter out the current blog and get 3 random blogs
+    const filteredBlogs = allBlogs
+      .filter((blog: any) => blog.slug !== currentSlug)
+      .sort(() => 0.5 - Math.random()) // Shuffle array
+      .slice(0, 3); // Take first 3
+    
+    return filteredBlogs;
+  } catch (error) {
+    console.error('Failed to fetch related blogs:', error);
+    return [];
+  }
 }
 
-export default function BlogDetail({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = React.use(params);
-  const [blog, setBlog] = useState<Blog | null>(null);
-  const [relatedBlogs, setRelatedBlogs] = useState<Blog[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Load blog from API
-  const loadBlog = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const foundBlog = await apiGet<Blog>(`/posts/slug/${id}`, '');
-      if (!foundBlog) {
-        setError('Blog post not found');
-        return;
-      }
-      setBlog(foundBlog);
-    } catch (err: any) {
-      console.error('Failed to load blog:', err);
-      setError('Failed to load blog post. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Load related blogs
-  const loadRelatedBlogs = async () => {
-    try {
-      const response = await apiGet<{ data: Blog[] }>('/posts?published=true&limit=10&sortBy=date&sortOrder=desc', '');
-      if (response?.data && Array.isArray(response.data)) {
-        // Filter out the current blog and get 3 random blogs
-        const filteredBlogs = response.data
-          .filter((relatedBlog: Blog) => relatedBlog.slug !== id)
-          .sort(() => 0.5 - Math.random()) // Shuffle array
-          .slice(0, 3); // Take first 3
-        setRelatedBlogs(filteredBlogs);
-      }
-    } catch (err: any) {
-      console.error('Failed to load related blogs:', err);
-      // Set empty array if loading fails
-      setRelatedBlogs([]);
-    }
-  };
-
-  useEffect(() => {
-    loadBlog();
-  }, [id]);
-
-  useEffect(() => {
-    if (blog) {
-      loadRelatedBlogs();
-    }
-  }, [blog]);
-
-  // Framer motion variants
-  const fadeInUp = {
-    hidden: { opacity: 0, y: 30 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.9 } },
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-[#f7fdff] via-[#eefdfa] to-[#f3fbff] flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#0f766e]"></div>
-          <p className="mt-4 text-slate-600">Loading article...</p>
-        </div>
-      </div>
-    );
+export default async function BlogDetailServer({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  
+  // Fetch blog post
+  const blogResult = await fetchBlogPost(id);
+  
+  if (!blogResult) {
+    notFound();
   }
+  
+  // Type assertion for the blog object
+  const blog: Blog = blogResult as Blog;
+  
+  // Fetch related blogs
+  const relatedBlogs = await getRelatedBlogs(id);
 
-  if (error || !blog) {
-    return notFound();
+  // Generate JSON-LD structured data for the article
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: blog.title,
+    description: blog.excerpt || `Read expert health and hygiene insights from Dr. Bushra Mirza. Learn about ${blog.title.toLowerCase()} and other important health topics.`,
+    image: blog.image_url || '/Images/thelogohytitle.png',
+    author: {
+      '@type': 'Person',
+      name: blog.author || 'Dr. Bushra Mirza',
+      jobTitle: 'Dentist and Health Expert',
+      url: 'https://hygieneshelf.in/about'
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Hygiene Shelf',
+      logo: {
+        '@type': 'ImageObject',
+        url: '/Images/thelogohytitle.png'
+      }
+    },
+    datePublished: new Date(blog.created_at).toISOString(),
+    dateModified: new Date(blog.updated_at).toISOString(),
+    mainEntityOfPage: `https://hygieneshelf.in/blogs/${blog.slug}`,
+    keywords: blog.tags ? blog.tags.join(',') : blog.category || '',
+    articleSection: blog.category || 'Health'
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <BlogDetailClient blog={blog} relatedBlogs={relatedBlogs} />
+    </>
+  );
+}
+
+// Client Component
+const BlogDetailClient = ({ blog, relatedBlogs }: { blog: Blog, relatedBlogs: Blog[] }) => {
+  // Parse text formatting for display
+  function parseFormattedText(text: string): string {
+    if (!text) return '';
+
+    // Convert markdown-style formatting to HTML
+    let formatted = text;
+
+    // Bold: **text** -> <strong>text</strong>
+    formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+    // Italic: *text* -> <em>text</em>
+    formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+    // Underline: <u>text</u> -> <u>text</u> (already HTML)
+    // Note: This is already HTML so it will be rendered
+
+    return formatted;
   }
 
   // Parse and render content blocks
@@ -378,7 +378,10 @@ export default function BlogDetail({ params }: { params: Promise<{ id: string }>
             <div className="flex-1 max-w-4xl">
               {/* Article Header */}
               <motion.header
-                variants={fadeInUp}
+                variants={{
+                  hidden: { opacity: 0, y: 30 },
+                  visible: { opacity: 1, y: 0, transition: { duration: 0.9 } },
+                }}
                 initial="hidden"
                 animate="visible"
                 className="mb-12"
@@ -408,10 +411,12 @@ export default function BlogDetail({ params }: { params: Promise<{ id: string }>
 
               {/* Article Content */}
               <motion.div
-                variants={fadeInUp}
+                variants={{
+                  hidden: { opacity: 0, y: 30 },
+                  visible: { opacity: 1, y: 0, transition: { duration: 0.9, delay: 0.3 } },
+                }}
                 initial="hidden"
                 animate="visible"
-                transition={{ delay: 0.3 }}
                 className="prose prose-slate max-w-none"
               >
                 {/* Description/Excerpt */}
@@ -427,34 +432,43 @@ export default function BlogDetail({ params }: { params: Promise<{ id: string }>
 
               {/* Article Footer */}
               <motion.footer
-                variants={fadeInUp}
+                variants={{
+                  hidden: { opacity: 0, y: 30 },
+                  visible: { opacity: 1, y: 0, transition: { duration: 0.9, delay: 0.5 } },
+                }}
                 initial="hidden"
                 animate="visible"
-                transition={{ delay: 0.5 }}
                 className="mt-16 pt-8 border-t border-slate-200"
               >
-                <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex flex-wrap flex-col md:flex-row items-start md:items-center justify-between gap-6">
                   <div className="flex flex-wrap gap-2">
-                    {blog.tags && blog.tags.map((tag, index) => {
+                    {blog.tags && blog.tags.map((tag: string, index: number) => {
                       // Only show tags that are valid (not UUIDs or invalid entries)
                       const isValidTag = typeof tag === 'string' && tag.trim() !== '' && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(tag);
                       return isValidTag ? (
-                        <span
+                        <a
                           key={index}
-                          className="bg-[#f0fdfa] text-[#0f766e] px-3 py-1 rounded-full text-sm"
+                          href={`/blogs?search=${encodeURIComponent(tag)}`}
+                          className="bg-[#f0fdfa] text-[#0f766e] px-3 py-1 rounded-full text-sm hover:bg-[#e6f7f4] transition-colors"
                         >
                           #{tag}
-                        </span>
+                        </a>
                       ) : null;
                     }).filter(Boolean)}
                   </div>
-                  <div className="flex items-center gap-4">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                     <Button
                       onClick={() => (window.location.href = '/blogs')}
                       className="bg-[#0f766e] hover:bg-[#0d5e59] text-white rounded-full px-6 py-2"
                     >
-                      Read More Articles
+                      Explore All Articles
                     </Button>
+                    <a 
+                      href="/about"
+                      className="text-[#0f766e] hover:text-[#06b6d4] transition-colors font-medium text-sm"
+                    >
+                      About Dr. Bushra
+                    </a>
                   </div>
                 </div>
               </motion.footer>
@@ -462,7 +476,10 @@ export default function BlogDetail({ params }: { params: Promise<{ id: string }>
 
             {/* Sidebar */}
             <div className="w-full lg:w-80 flex-shrink-0">
-              <CategoriesBox />
+              <div className="mb-8">
+                <h4 className="text-lg font-semibold text-[#0f766e] mb-4" style={{ fontFamily: '"Playfair Display", serif' }}>Explore More Topics</h4>
+                <CategoriesBox />
+              </div>
               <GoogleAdsBox />
             </div>
           </div>
@@ -486,10 +503,10 @@ export default function BlogDetail({ params }: { params: Promise<{ id: string }>
             className="text-center mb-12"
           >
             <h3 className="text-2xl md:text-3xl font-bold text-[#0f766e] mb-4" style={{ fontFamily: '"Playfair Display", serif' }}>
-              Related Articles
+              More Hygiene Insights
             </h3>
             <p className="text-lg text-slate-600">
-              Continue your learning journey with these related topics
+              Explore more expert advice on health and hygiene topics
             </p>
           </motion.div>
 
@@ -609,4 +626,4 @@ export default function BlogDetail({ params }: { params: Promise<{ id: string }>
       `}</style>
     </div>
   );
-}
+};

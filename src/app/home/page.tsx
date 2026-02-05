@@ -61,9 +61,19 @@ type Shelf = {
 };
 
 export default function HomePage({ token = '' }: Partial<Props>) {
+  console.log('HomePage component rendering');
   const { user } = useUser();
   const [tags, setTags] = useState<Tag[]>([]);
   const [blogs, setBlogs] = useState<Blog[]>([]);
+  
+  // Debug effect to monitor blogs state
+  useEffect(() => {
+    console.log('Blogs state changed:', blogs);
+    console.log('Blogs length:', blogs.length);
+    if (blogs.length > 0) {
+      console.log('First blog:', blogs[0]);
+    }
+  }, [blogs]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false); // isMobile state removed as it was not fully necessary for the fix
@@ -78,10 +88,14 @@ export default function HomePage({ token = '' }: Partial<Props>) {
   // loadTags (regular tags only)
   const loadTags = async () => {
     try {
+      console.log('loadTags function called');
       setLoading(true);
       setError(null);
-      const data = await apiGet<Tag[]>('/tags?tag_type=regular', token);
+      console.log('Making API call to /tags?tag_type=regular');
+      const data = await apiGet<Tag[]>('/tags?tag_type=regular', '');
+      console.log('Tags API response:', data);
       setTags(Array.isArray(data) ? data : []);
+      console.log('Tags state updated');
     } catch (err: any) {
       console.error('Failed to load tags:', err);
       // Don't show error for tags - let the page work without them
@@ -94,8 +108,37 @@ export default function HomePage({ token = '' }: Partial<Props>) {
   // loadBlogs (latest featured and published blogs)
   const loadBlogs = async () => {
     try {
-      const response = await apiGet<{ data: Blog[] }>('/posts?published=true&featured=true&limit=3&sortBy=date&sortOrder=desc', token);
-      setBlogs(Array.isArray(response.data) ? response.data : []);
+      console.log('Loading blogs...');
+      const response = await apiGet<{ data: Blog[] }>('/posts?published=true&limit=10&sortBy=date&sortOrder=desc', '');
+      console.log('Blogs response:', response);
+      console.log('Response data type:', typeof response);
+      console.log('Response data keys:', Object.keys(response || {}));
+      console.log('Response data:', response);
+      
+      // Handle different response formats
+      let blogData: Blog[] = [];
+      if (response && typeof response === 'object') {
+        if (Array.isArray(response)) {
+          // Direct array response
+          blogData = response as Blog[];
+        } else if (response.data && Array.isArray(response.data)) {
+          // Object with data array
+          blogData = response.data as Blog[];
+        } else if (response.data) {
+          // Object with data property that's not an array
+          console.log('Response.data is not an array:', response.data);
+          blogData = [];
+        } else {
+          // Other object format
+          console.log('Unexpected response format:', response);
+          blogData = [];
+        }
+      }
+      
+      console.log('Processed blog data:', blogData);
+      console.log('Blog data length:', blogData.length);
+      setBlogs(blogData);
+      console.log('Blogs set to state:', blogData);
     } catch (err: any) {
       console.error('Failed to load blogs:', err);
       // Don't show error for blogs, just log it and show fallback
@@ -112,13 +155,26 @@ export default function HomePage({ token = '' }: Partial<Props>) {
     acc[slug].push(tag);
     return acc;
   }, {} as Record<string, Tag[]>);
+  
+  // Debug logging
+  console.log('All tags loaded:', tags);
+  console.log('Grouped tags:', groupedTags);
 
   useEffect(() => {
+    console.log('useEffect triggered');
+    console.log('isClient:', isClient);
+    console.log('Component mounted, calling data loading functions');
     setIsClient(true);
     // The mobile check logic and its resize listener were removed as they aren't strictly necessary for the image/general speed fix.
 
-    loadTags();
-    loadBlogs();
+    console.log('Calling loadTags and loadBlogs');
+    try {
+      loadTags();
+      loadBlogs();
+      console.log('Data loading functions called successfully');
+    } catch (error) {
+      console.error('Error calling data loading functions:', error);
+    }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -440,57 +496,68 @@ export default function HomePage({ token = '' }: Partial<Props>) {
         Topics
       </h3>
       <p className="text-sm text-slate-600 mt-2">Explore our health and hygiene topics</p>
+      <p className="text-xs text-red-500 mt-2">Debug: {tags.length} tags loaded, {Object.keys(groupedTags).length} groups</p>
     </div>
 
     {loading && <p className="text-center text-slate-500">Loading topics…</p>}
     {error && <p className="text-center text-red-500">{error}</p>}
 
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      {[
-        {
-          name: 'Oral Hygiene Shelf',
-          slug: 'Oral Hygiene Shelf',
-          image: '/Images/Oral Hygiene Shelf.jpeg',
-          description: 'Dental care, oral health, and smile maintenance'
-        },
-        {
-          name: 'Mental Hygiene Shelf',
-          slug: 'Mental Hygiene Shelf',
-          image: '/Images/Mental Hygiene Shelf.jpeg',
-          description: 'Mental health, mindfulness, and emotional wellbeing'
-        },
-        {
-          name: 'Holistic Health Hygiene Shelf',
-          slug: 'Holistic Health Hygiene Shelf',
-          image: '/Images/Holistic Health Hygiene Shelf.jpeg',
-          description: 'Comprehensive wellness and hygiene practices for overall health'
-        },
-        {
-          name: 'Kids Hygiene Shelf',
-          slug: 'Kids Hygiene Shelf',
-          image: '/Images/Kids Hygiene Shelf.png',
-          description: 'Child health, pediatric care, and family wellness routines'
-        },
-        {
-          name: 'Home Hygiene Shelf',
-          slug: 'Home Hygiene Shelf',
-          image: '/Images/Home Hygiene Shelf.png',
-          description: 'Household sanitation, cleaning tips, and home environment health'
-        },
-        {
-          name: 'Food Hygiene Shelf',
-          slug: 'Food Hygiene Shelf',
-          image: '/Images/Food Hygiene Shelf.png',
-          description: 'Nutrition, food safety, and healthy eating habits'
-        }
-      ].map((shelf, index) => (
-        <ShelfCard
-          key={shelf.slug}
-          shelf={shelf}
-          tags={groupedTags[shelf.slug] || []}
-          index={index}
-        />
-      ))}
+      {
+        [
+          {
+            name: 'Oral Hygiene Shelf',
+            slug: 'Oral Hygiene Shelf',
+            image: '/Images/Oral Hygiene Shelf.jpeg',
+            description: 'Dental care, oral health, and smile maintenance'
+          },
+          {
+            name: 'Mental Hygiene Shelf',
+            slug: 'Mental Hygiene Shelf',
+            image: '/Images/Mental Hygiene Shelf.jpeg',
+            description: 'Mental health, mindfulness, and emotional wellbeing'
+          },
+          {
+            name: 'Holistic Health Hygiene Shelf',
+            slug: 'Holistic Health Hygiene Shelf',
+            image: '/Images/Holistic Health Hygiene Shelf.jpeg',
+            description: 'Comprehensive wellness and hygiene practices for overall health'
+          },
+          {
+            name: 'Kids Hygiene Shelf',
+            slug: 'Kids Hygiene Shelf',
+            image: '/Images/Kids Hygiene Shelf.png',
+            description: 'Child health, pediatric care, and family wellness routines'
+          },
+          {
+            name: 'Home Hygiene Shelf',
+            slug: 'Home Hygiene Shelf',
+            image: '/Images/Home Hygiene Shelf.png',
+            description: 'Household sanitation, cleaning tips, and home environment health'
+          },
+          {
+            name: 'Food Hygiene Shelf',
+            slug: 'Food Hygiene Shelf',
+            image: '/Images/Food Hygiene Shelf.png',
+            description: 'Nutrition, food safety, and healthy eating habits'
+          }
+        ]
+        .map((shelf, index) => {
+          const shelfTags = groupedTags[shelf.slug] || [];
+          console.log(`Shelf: ${shelf.name} (slug: ${shelf.slug})`);
+          console.log(`Matching tags:`, shelfTags);
+          console.log(`All grouped tags:`, groupedTags);
+          
+          return (
+            <ShelfCard
+              key={shelf.slug}
+              shelf={shelf}
+              tags={shelfTags}
+              index={index}
+            />
+          );
+        })
+      }
     </div>
   </div>
 </section>
@@ -507,7 +574,7 @@ export default function HomePage({ token = '' }: Partial<Props>) {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {blogs.length > 0 ? (
-              blogs.map((blog, i) => (
+              blogs.slice(0, 3).map((blog, i) => (
                 <motion.article
                   key={blog.id}
                   initial={{ opacity: 0, y: 20 }}

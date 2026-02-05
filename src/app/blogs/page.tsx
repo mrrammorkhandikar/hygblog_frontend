@@ -211,7 +211,7 @@ export default function BlogsPage() {
               Latest Articles
             </h2>
             <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-              Stay informed with the latest health insights, practical tips, and evidence-based guidance
+              Expert health and hygiene guidance on oral care, kids hygiene, mental wellness, and family health practices
             </p>
           </motion.div>
 

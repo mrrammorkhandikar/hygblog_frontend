@@ -296,7 +296,14 @@ export default function EditPost() {
         }
 
         // Tags
-        if (Array.isArray(post.tags)) setSelectedTagIds(post.tags);
+        if (Array.isArray(post.tags)) {
+          // Convert tag names to tag IDs for selection using the fresh tagsData
+          const tagIds = post.tags.map((tagName: string) => {
+            const tagObj = tagsData.find((t: Tag) => t.name === tagName);
+            return tagObj ? tagObj.id : tagName; // Return original if not found
+          }).filter((id: string | undefined) => id !== undefined) as string[];
+          setSelectedTagIds(tagIds);
+        }
 
         // Title image
         if (post.image_url) {
@@ -682,7 +689,10 @@ const getContextFromForm = (): LLMSuggestionContext & { content?: string } => {
         excerpt: excerpt.trim(),
         content: JSON.stringify(jsonContentBlocks),
         category: selectedCategoryId ? categories.find(c => c.id === selectedCategoryId)?.name || '' : '',
-        tags: selectedTagIds,
+        tags: selectedTagIds.map(tagId => {
+          const tag = tags.find(t => t.id === tagId);
+          return tag ? tag.name : tagId; // fallback to ID if tag not found
+        }),
         image_url: titleImageUrl || null,
         seo_title: seoTitle.trim() || null,
         seo_description: seoDescription.trim() || null,

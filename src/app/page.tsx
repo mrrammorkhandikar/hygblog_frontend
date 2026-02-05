@@ -1,6 +1,6 @@
 
 import { posts } from '@/data/posts'
-import HomePage from './home/page'
+import HomePageClient from '@/components/HomePageClient'
 
 export default function Content() {
   const recent = posts.slice(0, 3)
@@ -8,7 +8,7 @@ export default function Content() {
 
   return (
     <>
-      <HomePage token={tokan} />
+      <HomePageClient token={tokan} />
     </>
   )
 }
