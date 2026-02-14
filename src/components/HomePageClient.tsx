@@ -70,7 +70,7 @@ export default function HomePageClient({ token = '' }: Partial<Props>) {
   const loadBlogs = async () => {
     try {
       console.log('Loading blogs in HomePageClient...');
-      const response = await fetch('http://localhost:8080/posts?published=true&limit=10&sortBy=date&sortOrder=desc');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/posts?published=true&limit=10&sortBy=date&sortOrder=desc`);
       const data = await response.json();
       console.log('Blogs response:', data);
       
