@@ -220,12 +220,12 @@ export default function HomePageClient({ token = '' }: Partial<Props>) {
             {/* Expanded About text */}
             <div className="prose prose-slate max-w-none">
               <h2 style={{ fontFamily: '"Playfair Display", serif' }} className="text-3xl md:text-4xl text-[#0f766e] font-bold">
-                Meet Dr. Bushra Mirza — Pediatric Dentist, Educator & Hygiene Expert
+                Meet Dr. Bushra Mirza — Dentist, Educator & Hygiene Expert
               </h2>
 
               <blockquote className="text-lg text-slate-700 mt-3 italic border-l-4 border-[#0f766e] pl-4">
                 "For me, hygiene is not just a habit, it's an act of self-respect. Hygiene Shelf is my way of helping every person, especially kids, choose themselves every day."
-                <br />— Dr. Bushra Mirza, Pediatric Dentist & Hygiene Expert
+                <br />— Dr. Bushra Mirza — Dentist, Educator & Hygiene Expert
               </blockquote>
 
               <p className="text-slate-700 mt-4">
