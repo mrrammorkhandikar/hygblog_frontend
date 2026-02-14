@@ -55,7 +55,7 @@ export default function HomePageClient({ token = '' }: Partial<Props>) {
   const loadTags = async () => {
     try {
       console.log('HomePageClient: Loading tags...');
-      const response = await fetch('http://localhost:8080/tags?tag_type=regular');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tags?tag_type=regular`);
       const data = await response.json();
       console.log('HomePageClient: Tags response:', data);
       setTags(Array.isArray(data) ? data : []);
@@ -249,7 +249,7 @@ export default function HomePageClient({ token = '' }: Partial<Props>) {
         Topics
       </h3>
       <p className="text-sm text-slate-600 mt-2">Explore our health and hygiene topics</p>
-      <p className="text-xs text-red-500 mt-2">Debug: {tags.length} tags loaded, {Object.keys(groupedTags).length} groups</p>
+    
     </div>
 
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
