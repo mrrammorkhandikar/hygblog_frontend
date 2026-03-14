@@ -348,8 +348,8 @@ export default function AdminDashboard() {
       const params = new URLSearchParams({
         page: currentPage.toString(),
         limit: pageSize.toString(),
-        sort: sortField,
-        order: sortDirection,
+        sortBy: sortField === 'created_at' ? 'date' : sortField,
+        sortOrder: sortDirection,
         ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
         ...(categoryFilter && { category: categoryFilter }),
         ...(publishedFilter && { published: publishedFilter }),
@@ -520,7 +520,7 @@ export default function AdminDashboard() {
             >
               <option value="">All Categories</option>
               {categories.map(cat => (
-                <option key={cat.id} value={cat.id}>{cat.name}</option>
+                <option key={cat.id} value={cat.name}>{cat.name}</option>
               ))}
             </select>
           </div>

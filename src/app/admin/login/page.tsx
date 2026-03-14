@@ -91,7 +91,7 @@ export default function AdminLogin() {
             </div>
 
             {err && (
-              <div className="flex items-center space-x-2 text-sm text-destructive ">
+              <div className="flex items-center space-x-2 text-sm text-black ">
                 <AlertCircle className="h-4 w-4" />
                 <span>{err}</span>
               </div>
