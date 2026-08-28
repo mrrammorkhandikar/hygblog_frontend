@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import CategoriesBox from '@/components/CategoriesBox';
 import GoogleAdsBox from '@/components/GoogleAdsBox';
 import EngagementSection from '@/components/EngagementSection';
+import TableOfContents, { type TocHeading } from '@/components/TableOfContents';
 import { fetchBlogPost } from './actions';
 import { apiGet } from '@/app/admin/api';
 
@@ -72,6 +73,41 @@ function parseFormattedText(text: string): string {
   // Note: This is already HTML so it will be rendered
 
   return formatted;
+}
+
+function stripHeadingText(text: string): string {
+  if (!text) return '';
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/\*(.*?)\*/g, '$1')
+    .replace(/<[^>]+>/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function getHeadingAnchor(block: ContentBlock): string {
+  const base = stripHeadingText(block.content)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  const suffix = block.id.replace(/[^a-zA-Z0-9]/g, '').slice(0, 8);
+  return (base || 'section') + (suffix ? `-${suffix}` : '');
+}
+
+function extractHeadings(content?: string): TocHeading[] {
+  if (!content) return [];
+  try {
+    const blocks: ContentBlock[] = JSON.parse(content);
+    return blocks
+      .filter((block) => block.type === 'text' && (block.metadata?.level || 0) >= 1 && stripHeadingText(block.content))
+      .map((block) => ({
+        id: getHeadingAnchor(block),
+        text: stripHeadingText(block.content),
+        level: block.metadata?.level || 1,
+      }));
+  } catch {
+    return [];
+  }
 }
 
 export default function BlogDetail({ params }: { params: Promise<{ id: string }> }) {
@@ -193,17 +229,20 @@ export default function BlogDetail({ params }: { params: Promise<{ id: string }>
               const baseClass = `font-bold text-[#0f766e]${contentClass}`;
               const formattedHeading = parseFormattedText(blockContent || 'Empty heading');
 
+              const headingId = getHeadingAnchor(block);
+              const headingScrollClass = 'scroll-mt-28';
+
               if (level === 1) {
                 return renderContentElement(
-                  <h1 key={block.id} className={`${baseClass} text-4xl md:text-5xl mt-12 mb-6 leading-tight`} style={{ fontFamily: '"Playfair Display", serif' }} dangerouslySetInnerHTML={{ __html: formattedHeading }} />
+                  <h1 id={headingId} key={block.id} className={`${baseClass} ${headingScrollClass} text-4xl md:text-5xl mt-12 mb-6 leading-tight`} style={{ fontFamily: '"Playfair Display", serif' }} dangerouslySetInnerHTML={{ __html: formattedHeading }} />
                 );
               } else if (level === 2) {
                 return renderContentElement(
-                  <h2 key={block.id} className={`${baseClass} text-3xl md:text-4xl mt-10 mb-5 leading-tight`} style={{ fontFamily: '"Playfair Display", serif' }} dangerouslySetInnerHTML={{ __html: formattedHeading }} />
+                  <h2 id={headingId} key={block.id} className={`${baseClass} ${headingScrollClass} text-3xl md:text-4xl mt-10 mb-5 leading-tight`} style={{ fontFamily: '"Playfair Display", serif' }} dangerouslySetInnerHTML={{ __html: formattedHeading }} />
                 );
               } else if (level === 3) {
                 return renderContentElement(
-                  <h3 key={block.id} className={`${baseClass} text-2xl md:text-3xl mt-8 mb-4 leading-tight`} style={{ fontFamily: '"Playfair Display", serif' }} dangerouslySetInnerHTML={{ __html: formattedHeading }} />
+                  <h3 id={headingId} key={block.id} className={`${baseClass} ${headingScrollClass} text-2xl md:text-3xl mt-8 mb-4 leading-tight`} style={{ fontFamily: '"Playfair Display", serif' }} dangerouslySetInnerHTML={{ __html: formattedHeading }} />
                 );
               }
               // Fallback for other levels (though admin only allows 0-3 now)
@@ -404,6 +443,7 @@ export default function BlogDetail({ params }: { params: Promise<{ id: string }>
                     </Button>
                   </div>
                 </div>
+                <TableOfContents headings={extractHeadings(blog.content)} />
               </motion.header>
 
               {/* Article Content */}

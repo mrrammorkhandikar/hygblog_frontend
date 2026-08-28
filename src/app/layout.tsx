@@ -110,7 +110,7 @@ export default function RootLayout({
         <link rel="prefetch" href="/blogs" />
         <link rel="prefetch" href="/about" />
       </head>
-      <body className="bg-gray-50 font-body antialiased">
+      <body className="bg-gray-50 font-body antialiased" suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

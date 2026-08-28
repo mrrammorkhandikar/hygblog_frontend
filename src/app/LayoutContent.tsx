@@ -22,18 +22,11 @@ export default function LayoutContent({
                             pathname?.startsWith('/blogs');
 
   if (isAdminPage) {
-    // For admin pages, only show content without header/footer
-    return (
-      <body className="bg-gray-50 font-body antialiased">
-        {children}
-      </body>
-    );
+    return <>{children}</>;
   }
 
-  // For non-admin pages, show full layout with header/footer
   return (
-    <body className="bg-gray-50 font-body antialiased">
-      {/* Global layout: Header at top, content in middle, footer at bottom */}
+    <>
       <div className="flex min-h-screen flex-col">
         <Header />
         <main className="flex-1">
@@ -41,9 +34,7 @@ export default function LayoutContent({
         </main>
         <Footer />
       </div>
-
-      {/* Floating Social Media Widget - only on specific pages */}
       {showFloatingSocial && <FloatingSocialMedia />}
-    </body>
+    </>
   );
 }
